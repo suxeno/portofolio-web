@@ -1,10 +1,10 @@
 # portofolio-web
 
-Career-first portfolio prototype for Arvinanto Bahtiar. The semantic document and contact links work without JavaScript; the optional terminal is a navigation helper, not a shell. Commands: `experience`, `projects`, `about`, `contact`, `help`, and `clear`. On a first tab session, a simulated (not network) introduction dismisses within 2.4 seconds or on Skip, Escape, scroll, or link activation; it is skipped for deep links, reduced motion, unavailable session storage, and repeat visits in that session.
+Career-first portfolio prototype for Arvinanto Bahtiar. The semantic document and contact links work without JavaScript; the optional terminal is a navigation helper, not a shell. Commands: `experience`, `projects`, `about`, `contact`, `help`, and `clear`. A simulated (not network) introduction plays on every page load and reload, including deep links, and dismisses after 5 seconds or immediately on Skip, Escape, or link activation. Reduced-motion users bypass it; JavaScript-disabled visitors see the content immediately. No session storage is required, and scroll restoration does not dismiss it.
 
 Project details are intentionally placeholders pending approved material. The role, education, tools and focus areas are supplied by the owner/manager; the linked public LinkedIn page previously required login for full inspection. Do not add unverified career claims, private employer details, or outcome metrics.
 
-The opening sequence now uses in-place package-manager-style percentages, transfer rates, sizes, and transaction output. These are explicitly labeled demo values for four fictional section packages, not measured downloads; the 2.4-second limit and all bypass paths remain unchanged.
+The opening sequence uses in-place package-manager-style percentages, transfer rates, sizes, and transaction output paced throughout the five-second sequence. These are explicitly labeled demo values for four fictional section packages, not measured downloads.
 
 ## Local checks
 

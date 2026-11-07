@@ -21,8 +21,7 @@ form?.addEventListener('submit', event => { event.preventDefault(); runCommand(i
 document.querySelectorAll<HTMLButtonElement>('[data-command]').forEach(button => button.addEventListener('click', () => runCommand(button.dataset.command ?? '')));
 
 function startIntro(): void {
-  if (window.location.hash || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  try { if (sessionStorage.getItem('arvin-intro-seen')) return; sessionStorage.setItem('arvin-intro-seen', '1'); } catch { return; }
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const overlay = document.createElement('div');
   overlay.className = 'boot';
   overlay.setAttribute('aria-label', 'Simulated profile introduction');
@@ -36,8 +35,10 @@ function startIntro(): void {
   document.body.append(overlay);
   let timer: number;
   let interval: number | undefined;
-  const dismiss = () => { clearTimeout(timer); clearInterval(interval); overlay.remove(); window.removeEventListener('keydown', onKey); window.removeEventListener('scroll', dismiss); document.removeEventListener('click', onAnchor); };
+  const dismiss = () => { clearTimeout(timer); clearInterval(interval); overlay.remove(); window.removeEventListener('keydown', onKey); document.removeEventListener('click', onAnchor); };
   // Fictional package sizes are visual storytelling, never network telemetry.
+  const packageDuration = 800;
+  const downloadDuration = sections.length * packageDuration;
   const sizes = [48, 96, 24, 8];
   const totalSize = sizes.reduce((sum, size) => sum + size, 0);
   const summary = overlay.querySelector<HTMLElement>('.boot-summary')!;
@@ -54,23 +55,23 @@ function startIntro(): void {
   });
   const total = overlay.querySelector<HTMLElement>('.boot-total')!;
   total.classList.add('boot-package');
-  total.innerHTML = '<span class="boot-package-name">[4/4] Total</span><span class="boot-percent">100%</span><span class="boot-speed"></span><span class="boot-size"></span><span class="boot-time">00m01s</span>';
-  total.querySelector('.boot-speed')!.textContent = `${(totalSize / 1.28).toFixed(1)} KiB/s`;
+  total.innerHTML = '<span class="boot-package-name">[4/4] Total</span><span class="boot-percent">100%</span><span class="boot-speed"></span><span class="boot-size"></span><span class="boot-time">00m03s</span>';
+  total.querySelector('.boot-speed')!.textContent = `${(totalSize / (downloadDuration / 1000)).toFixed(1)} KiB/s`;
   total.querySelector('.boot-size')!.textContent = `${totalSize.toFixed(1)} KiB`;
   const transaction = overlay.querySelector<HTMLElement>('.boot-transaction')!;
   const started = performance.now();
   function renderPackages(): void {
     const elapsed = performance.now() - started;
     rows.forEach((row, index) => {
-      const progress = Math.max(0, Math.min(1, (elapsed - index * 320) / 320));
-      row.hidden = elapsed < index * 320;
+      const progress = Math.max(0, Math.min(1, (elapsed - index * packageDuration) / packageDuration));
+      row.hidden = elapsed < index * packageDuration;
       row.dataset.state = progress === 1 ? 'complete' : 'downloading';
       row.querySelector('.boot-percent')!.textContent = `${Math.floor(progress * 100)}%`;
-      row.querySelector('.boot-speed')!.textContent = `${(sizes[index] / 0.32).toFixed(1)} KiB/s`;
+      row.querySelector('.boot-speed')!.textContent = `${(sizes[index] / (packageDuration / 1000)).toFixed(1)} KiB/s`;
       row.querySelector('.boot-size')!.textContent = `${(sizes[index] * progress).toFixed(1)} KiB`;
       row.querySelector('.boot-time')!.textContent = '00m00s';
     });
-    total.hidden = elapsed < 1280;
+    total.hidden = elapsed < downloadDuration;
     const steps = [
       'Running transaction',
       '[1/3] Verify profile files   100%',
@@ -78,7 +79,8 @@ function startIntro(): void {
       '[3/3] Installing arvin-profile   100%',
       'Complete!',
     ];
-    const count = elapsed < 1400 ? 0 : Math.min(steps.length, Math.floor((elapsed - 1400) / 130) + 1);
+    const transactionStart = downloadDuration + 300;
+    const count = elapsed < transactionStart ? 0 : Math.min(steps.length, Math.floor((elapsed - transactionStart) / 250) + 1);
     transaction.textContent = steps.slice(0, count).join('\n');
     if (count === steps.length) clearInterval(interval);
   }
@@ -88,9 +90,9 @@ function startIntro(): void {
   const onAnchor = (event: MouseEvent) => { if (event.target instanceof Element && event.target.closest('a')) dismiss(); };
   overlay.querySelector('button')?.addEventListener('click', dismiss);
   window.addEventListener('keydown', onKey);
-  window.addEventListener('scroll', dismiss, { passive: true });
+
   document.addEventListener('click', onAnchor);
-  timer = window.setTimeout(dismiss, 2400);
+  timer = window.setTimeout(dismiss, 5000);
 }
 startIntro();
 

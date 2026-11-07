@@ -35,14 +35,19 @@ test('career content and contact work without JavaScript', async () => {
   assert.equal(await page.locator('.boot').count(), 0);
   await page.close();
 });
-test('first-session intro is skippable, bounded and does not repeat', async () => {
+test('intro replays on every reload and lasts five seconds unless skipped', async () => {
   const context = await browser.newContext(); const page = await context.newPage();
   await page.clock.install(); await page.clock.pauseAt(new Date());
-  await page.goto(url, { waitUntil: 'domcontentloaded' }); await page.locator('.boot').waitFor({ state: 'attached', timeout: 5000 }); assert.equal(await page.locator('.boot').count(), 1);
+  await page.goto(url, { waitUntil: 'domcontentloaded' }); await page.locator('.boot').waitFor({ state: 'attached', timeout: 5000 });
   await page.getByRole('button', { name: 'Skip intro' }).focus(); await page.keyboard.press('Enter'); assert.equal(await page.locator('.boot').count(), 0);
-  await page.reload(); assert.equal(await page.locator('.boot').count(), 0);
-  await page.evaluate(() => sessionStorage.clear()); await page.reload();
-  assert.equal(await page.locator('.boot').count(), 1); await page.clock.fastForward(2500); assert.equal(await page.locator('.boot').count(), 0);
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  assert.equal(await page.locator('.boot').count(), 1, 'reload replays even after Skip');
+  await page.clock.runFor(2500); assert.equal(await page.locator('.boot').count(), 1, 'not dismissed at the old deadline');
+  await page.clock.runFor(2400); assert.equal(await page.locator('.boot').count(), 1);
+  await page.clock.runFor(200); assert.equal(await page.locator('.boot').count(), 0);
+  await page.reload({ waitUntil: 'domcontentloaded' });
+  assert.equal(await page.locator('.boot').count(), 1, 'reload replays after natural completion too');
+  await page.keyboard.press('Escape'); assert.equal(await page.locator('.boot').count(), 0);
   await context.close();
 });
 test('package intro updates terminal rows in place then completes its transaction', async () => {
@@ -55,13 +60,16 @@ test('package intro updates terminal rows in place then completes its transactio
   const partial = await page.locator('[data-boot-package="experience"] .boot-percent').textContent();
   assert.notEqual(partial, '100%');
   assert.match(await page.locator('.boot-summary').textContent(), /KiB/);
-  await page.clock.runFor(1300);
+  await page.clock.runFor(2300);
+  assert.notEqual(await page.locator('[data-boot-package="contact"] .boot-percent').textContent(), '100%', 'package animation is paced across the longer intro');
+  assert.doesNotMatch(await page.locator('.boot-transaction').textContent(), /Complete!/);
+  await page.clock.runFor(1000);
   assert.equal(await page.locator('[data-boot-package]').count(), 4, 'updates replace values, never duplicate log rows');
   for (const name of ['experience', 'projects', 'about', 'contact']) {
     assert.equal(await page.locator(`[data-boot-package="${name}"] .boot-percent`).textContent(), '100%');
     assert.match(await page.locator(`[data-boot-package="${name}"] .boot-size`).textContent(), /KiB/);
   }
-  await page.clock.runFor(650);
+  await page.clock.runFor(1100);
   assert.match(await page.locator('.boot-transaction').textContent(), /Complete!/);
   await page.setViewportSize({ width: 320, height: 640 });
   assert.equal(await page.evaluate(() => {
@@ -70,16 +78,22 @@ test('package intro updates terminal rows in place then completes its transactio
     return transaction.bottom <= body.bottom && transaction.left >= 0;
   }), true, 'completed transaction stays visible on a small phone');
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
-  await page.clock.runFor(400);
+  await page.clock.runFor(600);
   assert.equal(await page.locator('.boot').count(), 0);
   await page.close();
 });
 
-test('reduced motion, deep links, denied storage and escape bypass or dismiss intro', async () => {
+test('reduced motion bypasses intro; deep-link reloads and denied storage still show it', async () => {
   const reduced = await browser.newPage({ reducedMotion: 'reduce' }); await reduced.goto(url); assert.equal(await reduced.locator('.boot').count(), 0); await reduced.close();
-  const deep = await browser.newPage(); await deep.goto(url + '/#contact'); assert.equal(await deep.locator('.boot').count(), 0); await deep.close();
-  const denied = await browser.newPage(); await denied.addInitScript(() => { Object.defineProperty(window, 'sessionStorage', { get() { throw new Error('denied'); } }); }); await denied.goto(url); assert.equal(await denied.locator('.boot').count(), 0); await denied.close();
-  const page = await browser.newPage(); await page.goto(url); await page.keyboard.press('Escape'); assert.equal(await page.locator('.boot').count(), 0); await page.close();
+  const deep = await browser.newPage();
+  await deep.clock.install(); await deep.clock.pauseAt(new Date());
+  await deep.goto(url + '/#contact'); await deep.clock.runFor(200);
+  assert.equal(await deep.locator('.boot').count(), 1, 'deep links show the intro too');
+  await deep.keyboard.press('Escape');
+  await deep.reload(); await deep.clock.runFor(200);
+  assert.equal(await deep.locator('.boot').count(), 1, 'restoring the scroll position must not dismiss it');
+  await deep.close();
+  const denied = await browser.newPage(); await denied.addInitScript(() => { Object.defineProperty(window, 'sessionStorage', { get() { throw new Error('denied'); } }); }); await denied.goto(url); assert.equal(await denied.locator('.boot').count(), 1); await denied.keyboard.press('Escape'); assert.equal(await denied.locator('.boot').count(), 0); await denied.close();
 });
 test('terminal commands, error handling, focus and browser history', async () => {
   const page = await browser.newPage({ reducedMotion: 'reduce' }); await page.goto(url);
