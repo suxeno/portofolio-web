@@ -1,37 +1,13 @@
-const form = document.querySelector<HTMLFormElement>('#command-form');
-const input = document.querySelector<HTMLInputElement>('#command');
-const output = document.querySelector<HTMLElement>('#terminal-output');
-const sections = ['experience', 'projects', 'about', 'contact'] as const;
+import './terminal';
 
-function runCommand(raw: string): void {
-  if (!output) return;
-  const command = raw.trim().toLowerCase();
-  if (!command) { output.textContent = 'Enter a command or choose a link.'; return; }
-  if (command === 'clear') { output.textContent = ''; return; }
-  if (command === 'help') { output.textContent = 'Commands: experience, projects, about, contact, help, clear. Section commands navigate the page.'; return; }
-  if (sections.some(section => section === command)) {
-    output.textContent = `Opening ${command}.`;
-    window.location.hash = command;
-    document.querySelector<HTMLElement>(`#${command}-title`)?.focus({ preventScroll: true });
-    return;
-  }
-  output.textContent = 'Command not recognized. Type help, or use the page links.';
-}
-form?.addEventListener('submit', event => { event.preventDefault(); runCommand(input?.value ?? ''); if (input) input.value = ''; });
-document.querySelectorAll<HTMLButtonElement>('[data-command]').forEach(button => button.addEventListener('click', () => runCommand(button.dataset.command ?? '')));
+const sections = ['experience', 'projects', 'about', 'contact'] as const;
 
 function startIntro(): void {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const overlay = document.createElement('div');
   overlay.className = 'boot';
   overlay.setAttribute('aria-label', 'Simulated profile introduction');
-  overlay.innerHTML = `<div class="boot-inner"><div class="boot-header"><span>ARVIN / PROFILE</span><button type="button">Skip intro <span aria-hidden="true">↗</span></button></div><div class="boot-body"><p class="boot-caption">SIMULATED PACKAGE UPDATE / DEMO TRANSFER VALUES</p><pre aria-hidden="true">  _   ______     _____ _   _
- / \\ |  _ \\ \\   / /_ _| \\ | |
-/ _ \\| |_) \\ \\ / / | ||  \\| |
-/ ___ \\  _ &lt; \\ V /  | || |\\  |
-/_/   \\_\\_| \\_\\ \\_/  |___|_| \\_|
-
- P R O F I L E</pre><p class="boot-compact" aria-hidden="true">arvin<br />profile_</p><p class="boot-name">arvin profile</p><div class="boot-packages" aria-hidden="true"><p class="boot-summary"></p><div class="boot-table"></div><div class="boot-total"></div><div class="boot-transaction"></div></div></div><div class="boot-footer">PERSONAL PROFILE <span>2026</span></div></div>`;
+  overlay.innerHTML = `<div class="boot-inner"><div class="boot-header"><span>ARVIN / PROFILE</span><button type="button">Skip intro <span aria-hidden="true">↗</span></button></div><div class="boot-body"><p class="boot-caption">SIMULATED PACKAGE UPDATE / DEMO TRANSFER VALUES</p><img class="arvin-glyph boot-glyph" src="/arvin.svg" alt="Arvin" /><p class="boot-name">arvin profile</p><div class="boot-packages" aria-hidden="true"><p class="boot-summary"></p><div class="boot-table"></div><div class="boot-total"></div><div class="boot-transaction"></div></div></div><div class="boot-footer">PERSONAL PROFILE <span>2026</span></div></div>`;
   document.body.append(overlay);
   let timer: number;
   let interval: number | undefined;
@@ -106,9 +82,13 @@ function enhanceSectionMotion(): void {
       if (!entry.isIntersecting) continue;
       observer.unobserve(entry.target);
       if (preference.matches) continue;
+      const section = entry.target.closest('section')?.id;
+      const from = section === 'projects' ? (window.matchMedia('(max-width: 600px)').matches ? 'translateX(-12px)' : 'translateX(-48px)') : section === 'experience' ? (window.matchMedia('(max-width: 600px)').matches ? 'translateY(18px)' : 'translateX(18px)') : section === 'writing' ? 'translateY(22px)' : 'translateY(12px)';
+      const rows = section === 'projects' ? [...(entry.target.closest('#projects')?.querySelectorAll('.entry') ?? [])] : [];
+      const index = rows.indexOf(entry.target);
       const animation = entry.target.animate(
-        [{ transform: 'translateY(16px)' }, { transform: 'translateY(0)' }],
-        { duration: 520, easing: 'cubic-bezier(.2,.65,.3,1)' },
+        [{ transform: from }, { transform: 'translate(0, 0)' }],
+        { duration: section === 'projects' ? 700 : 520, delay: index < 0 ? 0 : index * 90, fill: 'backwards', easing: 'cubic-bezier(.22,1,.36,1)' },
       );
       animations.add(animation);
       animation.onfinish = () => animations.delete(animation);
