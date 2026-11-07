@@ -26,16 +26,64 @@ function startIntro(): void {
   const overlay = document.createElement('div');
   overlay.className = 'boot';
   overlay.setAttribute('aria-label', 'Simulated profile introduction');
-  overlay.innerHTML = `<div class="boot-inner"><div class="boot-header"><span>ARVIN / PROFILE</span><button type="button">Skip intro <span aria-hidden="true">↗</span></button></div><div class="boot-body"><p class="boot-caption">A SIMULATED INTRODUCTION / NO INSTALLATION</p><pre aria-hidden="true">  _   ______     _____ _   _
+  overlay.innerHTML = `<div class="boot-inner"><div class="boot-header"><span>ARVIN / PROFILE</span><button type="button">Skip intro <span aria-hidden="true">↗</span></button></div><div class="boot-body"><p class="boot-caption">SIMULATED PACKAGE UPDATE / DEMO TRANSFER VALUES</p><pre aria-hidden="true">  _   ______     _____ _   _
  / \\ |  _ \\ \\   / /_ _| \\ | |
 / _ \\| |_) \\ \\ / / | ||  \\| |
 / ___ \\  _ &lt; \\ V /  | || |\\  |
 /_/   \\_\\_| \\_\\ \\_/  |___|_| \\_|
 
- P R O F I L E</pre><p class="boot-compact" aria-hidden="true">arvin<br />profile_</p><p class="boot-name">arvin profile</p><p class="boot-index">indexing profile sections <span>· experience</span> <span>· projects</span> <span>· about</span> <span>· contact</span></p></div><div class="boot-footer">PERSONAL PROFILE <span>2026</span></div></div>`;
+ P R O F I L E</pre><p class="boot-compact" aria-hidden="true">arvin<br />profile_</p><p class="boot-name">arvin profile</p><div class="boot-packages" aria-hidden="true"><p class="boot-summary"></p><div class="boot-table"></div><div class="boot-total"></div><div class="boot-transaction"></div></div></div><div class="boot-footer">PERSONAL PROFILE <span>2026</span></div></div>`;
   document.body.append(overlay);
   let timer: number;
-  const dismiss = () => { clearTimeout(timer); overlay.remove(); window.removeEventListener('keydown', onKey); window.removeEventListener('scroll', dismiss); document.removeEventListener('click', onAnchor); };
+  let interval: number | undefined;
+  const dismiss = () => { clearTimeout(timer); clearInterval(interval); overlay.remove(); window.removeEventListener('keydown', onKey); window.removeEventListener('scroll', dismiss); document.removeEventListener('click', onAnchor); };
+  // Fictional package sizes are visual storytelling, never network telemetry.
+  const sizes = [48, 96, 24, 8];
+  const totalSize = sizes.reduce((sum, size) => sum + size, 0);
+  const summary = overlay.querySelector<HTMLElement>('.boot-summary')!;
+  summary.textContent = `Updating arvin-profile: 4 section packages (${totalSize} KiB).`;
+  const table = overlay.querySelector<HTMLElement>('.boot-table')!;
+  const rows = sections.map((section, index) => {
+    const row = document.createElement('div');
+    row.className = 'boot-package';
+    row.dataset.bootPackage = section;
+    row.innerHTML = '<span class="boot-package-name"></span><span class="boot-percent"></span><span class="boot-speed"></span><span class="boot-size"></span><span class="boot-time"></span>';
+    row.querySelector('.boot-package-name')!.textContent = `[${index + 1}/4] ${section}-profile`;
+    table.append(row);
+    return row;
+  });
+  const total = overlay.querySelector<HTMLElement>('.boot-total')!;
+  total.classList.add('boot-package');
+  total.innerHTML = '<span class="boot-package-name">[4/4] Total</span><span class="boot-percent">100%</span><span class="boot-speed"></span><span class="boot-size"></span><span class="boot-time">00m01s</span>';
+  total.querySelector('.boot-speed')!.textContent = `${(totalSize / 1.28).toFixed(1)} KiB/s`;
+  total.querySelector('.boot-size')!.textContent = `${totalSize.toFixed(1)} KiB`;
+  const transaction = overlay.querySelector<HTMLElement>('.boot-transaction')!;
+  const started = performance.now();
+  function renderPackages(): void {
+    const elapsed = performance.now() - started;
+    rows.forEach((row, index) => {
+      const progress = Math.max(0, Math.min(1, (elapsed - index * 320) / 320));
+      row.hidden = elapsed < index * 320;
+      row.dataset.state = progress === 1 ? 'complete' : 'downloading';
+      row.querySelector('.boot-percent')!.textContent = `${Math.floor(progress * 100)}%`;
+      row.querySelector('.boot-speed')!.textContent = `${(sizes[index] / 0.32).toFixed(1)} KiB/s`;
+      row.querySelector('.boot-size')!.textContent = `${(sizes[index] * progress).toFixed(1)} KiB`;
+      row.querySelector('.boot-time')!.textContent = '00m00s';
+    });
+    total.hidden = elapsed < 1280;
+    const steps = [
+      'Running transaction',
+      '[1/3] Verify profile files   100%',
+      '[2/3] Prepare profile       100%',
+      '[3/3] Installing arvin-profile   100%',
+      'Complete!',
+    ];
+    const count = elapsed < 1400 ? 0 : Math.min(steps.length, Math.floor((elapsed - 1400) / 130) + 1);
+    transaction.textContent = steps.slice(0, count).join('\n');
+    if (count === steps.length) clearInterval(interval);
+  }
+  renderPackages();
+  interval = window.setInterval(renderPackages, 40);
   const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') dismiss(); };
   const onAnchor = (event: MouseEvent) => { if (event.target instanceof Element && event.target.closest('a')) dismiss(); };
   overlay.querySelector('button')?.addEventListener('click', dismiss);

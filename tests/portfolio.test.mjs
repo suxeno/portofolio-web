@@ -45,6 +45,36 @@ test('first-session intro is skippable, bounded and does not repeat', async () =
   assert.equal(await page.locator('.boot').count(), 1); await page.clock.fastForward(2500); assert.equal(await page.locator('.boot').count(), 0);
   await context.close();
 });
+test('package intro updates terminal rows in place then completes its transaction', async () => {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await page.clock.install(); await page.clock.pauseAt(new Date());
+  await page.goto(url, { waitUntil: 'domcontentloaded' });
+  await page.locator('.boot').waitFor({ state: 'attached' });
+  assert.equal(await page.locator('[data-boot-package]').count(), 4);
+  await page.clock.runFor(180);
+  const partial = await page.locator('[data-boot-package="experience"] .boot-percent').textContent();
+  assert.notEqual(partial, '100%');
+  assert.match(await page.locator('.boot-summary').textContent(), /KiB/);
+  await page.clock.runFor(1300);
+  assert.equal(await page.locator('[data-boot-package]').count(), 4, 'updates replace values, never duplicate log rows');
+  for (const name of ['experience', 'projects', 'about', 'contact']) {
+    assert.equal(await page.locator(`[data-boot-package="${name}"] .boot-percent`).textContent(), '100%');
+    assert.match(await page.locator(`[data-boot-package="${name}"] .boot-size`).textContent(), /KiB/);
+  }
+  await page.clock.runFor(650);
+  assert.match(await page.locator('.boot-transaction').textContent(), /Complete!/);
+  await page.setViewportSize({ width: 320, height: 640 });
+  assert.equal(await page.evaluate(() => {
+    const transaction = document.querySelector('.boot-transaction').getBoundingClientRect();
+    const body = document.querySelector('.boot-body').getBoundingClientRect();
+    return transaction.bottom <= body.bottom && transaction.left >= 0;
+  }), true, 'completed transaction stays visible on a small phone');
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+  await page.clock.runFor(400);
+  assert.equal(await page.locator('.boot').count(), 0);
+  await page.close();
+});
+
 test('reduced motion, deep links, denied storage and escape bypass or dismiss intro', async () => {
   const reduced = await browser.newPage({ reducedMotion: 'reduce' }); await reduced.goto(url); assert.equal(await reduced.locator('.boot').count(), 0); await reduced.close();
   const deep = await browser.newPage(); await deep.goto(url + '/#contact'); assert.equal(await deep.locator('.boot').count(), 0); await deep.close();
