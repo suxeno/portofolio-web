@@ -1,4 +1,6 @@
-# Frontend brief — next stage, not implemented
+# Frontend brief — implemented prototype
+
+This original brief records the initial request. The accepted implementation brief and user authorization supersede its staged setup language; the prototype is now implemented locally, pending review and manager-led publication.
 
 Arvinanto Bahtiar is a Data Engineer / applied ML-AI professional. Build an original, career-first, readable Olha-style editorial portfolio with considered scroll animation. Styling inspiration: https://nader.io/editions/monochrome/ and https://nader.io/editions/personal-computer/; do not clone either reference. Before designing or writing content, inspect the actual references and the user's LinkedIn; verify factual content with the user. Never invent metrics, experience, or projects.
 

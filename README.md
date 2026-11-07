@@ -1,10 +1,12 @@
 # portofolio-web
 
-Infrastructure scaffold for Arvinanto Bahtiar's portfolio. The page is an intentionally small placeholder, **not** the designed frontend. See [the next-stage brief](docs/BRIEF.md). Vite and TypeScript provide a lightweight static foundation; Cloudflare Workers Static Assets serves the output without a framework or server-side Worker code.
+Career-first portfolio prototype for Arvinanto Bahtiar. The semantic document and contact links work without JavaScript; the optional terminal is a navigation helper, not a shell. Commands: `experience`, `projects`, `about`, `contact`, `help`, and `clear`. On a first tab session, a simulated (not network) introduction dismisses within 2.4 seconds or on Skip, Escape, scroll, or link activation; it is skipped for deep links, reduced motion, unavailable session storage, and repeat visits in that session.
+
+Project details are intentionally placeholders pending approved material. The role, education, tools and focus areas are supplied by the owner/manager; the linked public LinkedIn page previously required login for full inspection. Do not add unverified career claims, private employer details, or outcome metrics.
 
 ## Local checks
 
-Use Node 22.23 or later on the Node 22 line (see `engines` for the supported lines) and npm:
+Node 22.23+ on the Node 22 line (see `engines`) and a local Chromium or Chrome are required. Tests look in common Linux paths, or set `CHROMIUM_PATH` to the browser executable. `playwright-core` controls that browser; it does not download one. On GitHub's Ubuntu runner, the preinstalled Google Chrome is used.
 
 ```sh
 npm ci
@@ -14,10 +16,10 @@ npm run build
 npm run check:deploy
 ```
 
-`npm run dev` starts Vite for local development. TypeScript checks configuration; the test checks that the placeholder remains readable without JavaScript. There is no separate lint tool yet: there is no application TypeScript to lint. The build uses Cloudflare's Vite plugin to generate `.cloudflare/output/v0`, and the credential-free dry run checks the same prebuilt output. `cf` and its Vite plugin are beta releases, pinned in the lockfile; monitor updates carefully. In contrast to the general Static Assets documentation's Wrangler examples, `cloudflare.config.ts` does not accept `assets.directory`: the Vite plugin provides the built assets. `cf build` does not run package scripts, so typecheck and tests are explicit CI steps. See [cf projects](https://developers.cloudflare.com/cf/projects/) and [cf CI](https://developers.cloudflare.com/cf/ci/).
+The automated suite uses real Chromium for no-JS content, intro behavior (the deadline uses Playwright's controlled clock), terminal, focus, history, responsive overflow and console errors. A separate small HTML source test checks basic markup. Browser tests are not a substitute for a full accessibility audit or physical-device testing. `npm run dev` serves Vite; optionally run `node tests/capture.mjs` while Vite is listening on port 4180 to capture desktop/mobile screenshots.
 
-## CI and deployment — pending setup
+The build uses Cloudflare's Vite plugin and `cf` beta releases pinned in the lockfile. The dry run checks prebuilt output without deploying. TypeScript includes app code and config.
 
-The private repository `suxeno/portofolio-web` still needs these files published and its GitHub Actions run independently verified. The workflow tests pull requests without Cloudflare secrets and deploys the already-tested build only on a `main` push or a manually dispatched run on `main`. It needs GitHub Actions enabled and repository Actions secrets named `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. An authorized account owner should create a narrowly scoped Cloudflare API token for the selected account with Workers deployment permissions (Workers Scripts edit; add only additional permissions actually required by the first deployment), then enter both values directly in GitHub repository Settings → Secrets and variables → Actions. Never commit or paste token values into chat. Account prerequisites such as Workers onboarding or enabling a workers.dev subdomain may need owner action; diagnose any first-run permission errors before broadening token scope. No domain, DNS, or paid upgrade is configured.
+## CI and deployment
 
-After publishing and adding secrets, trigger or push `main`, inspect all GitHub Actions steps and confirm the resulting workers.dev URL over HTTP. A successful local dry run is **not** a real deploy. Do not deploy through a separate manual path: deployment is intended through GitHub Actions only. The GitHub repository can remain private, but the deployed website is public; never place private source, credentials, or unapproved personal information in client assets.
+The private repository is `suxeno/portofolio-web`; the public Worker is named `portofolio`. The existing GitHub Actions workflow tests pull requests without Cloudflare secrets and deploys the tested build on a `main` push or manual dispatch on `main`. Deployment uses the existing repository secrets, managed by the authorized owner. A local dry run is not a deployment. Do not use a separate manual deployment path or include secrets and private information in client assets. The manager handles publication and live verification.
