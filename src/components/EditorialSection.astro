@@ -1,0 +1,8 @@
+---
+interface Props { id: string; label: string; lead: string; emphasis: string }
+const { id, label, lead, emphasis } = Astro.props;
+---
+<section class="editorial wrap" id={id} aria-labelledby={`${id}-title`}>
+  <div class="section-label">{label}</div>
+  <div><h2 id={`${id}-title`} tabindex="-1">{lead} <em>{emphasis}</em></h2><slot /></div>
+</section>

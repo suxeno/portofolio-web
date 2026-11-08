@@ -1,0 +1,56 @@
+---
+import "../style.css";
+import Terminal from "../components/Terminal.vue";
+import EditorialSection from "../components/EditorialSection.astro";
+import { writing, projects, experience, achievements } from "../content";
+---
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Arvinanto Bahtiar — data engineer working across data engineering, monitoring, and applied AI." />
+  <title>Arvinanto Bahtiar — Data Engineer</title>
+  <link rel="icon" href="data:," />
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header wrap">
+    <a class="wordmark" href="#top">arvin <span>/ profile</span></a>
+    <nav aria-label="Main navigation"><a href="#writing">Writing</a><a href="#projects">Projects</a><a href="#experience">Experience</a><a href="#achievements">Achievements</a><a href="#contact">Contact</a></nav>
+  </header>
+  <main id="main">
+    <section class="hero wrap" id="top" aria-labelledby="hero-title">
+      <div class="terminal">
+        <div class="terminal-top"><span>arvin@portfolio: ~</span><span>SIMULATED TERMINAL / 01</span></div>
+        <h1 id="hero-title"><span class="sr-only">Arvin</span><img class="arvin-glyph" src="/arvin.svg" alt="" /></h1>
+        <p class="role">Data Engineering<br />ML/AI Engineering</p>
+        <p class="intro">Building reliable data pipelines, monitoring solutions and AI-powered applications.</p>
+        <p class="academic">Data Science · Telkom University · 2022–2026</p>
+        <p>arvin@portfolio:~$ ls</p>
+        <nav class="terminal-list" aria-label="Portfolio directories"><a href="#writing">writing/</a><a href="#projects">projects/</a><a href="#experience">experience/</a><a href="#achievements">achievements/</a><a href="#contact">contact/</a><a href="#readme">README.md</a></nav>
+        <p id="readme">README.md — Arvin works across Data Engineering and ML/AI Engineering. Data Science · Telkom University.</p>
+        <Terminal client:load />
+        <noscript><p>Command input requires JavaScript. Directory links remain available.</p></noscript>
+      </div>
+    </section>
+    <div class="section-rule wrap"><span>PROFILE / SELECTED INFORMATION</span><span>SCROLL TO EXPLORE ↓</span></div>
+    <EditorialSection id="writing" label="01 / WRITING" lead="Notes from" emphasis="the work.">
+      {writing.map(item => <div class="entry"><a href={item.href}>{item.title} ↗</a><p>{item.detail}</p></div>)}
+    </EditorialSection>
+    <EditorialSection id="projects" label="02 / PROJECTS" lead="Made to" emphasis="work.">
+      {projects.map(item => <div class="entry"><h3><a href={item.href}>{item.title} ↗</a></h3><p>{item.detail}</p></div>)}
+    </EditorialSection>
+    <EditorialSection id="experience" label="03 / EXPERIENCE" lead="Where I’ve" emphasis="worked.">
+      {experience.map(item => <div class="entry"><div class="entry-date">{item.date}</div><div><h3>{item.title}</h3><p>{item.organization}</p></div></div>)}
+    </EditorialSection>
+    <EditorialSection id="achievements" label="04 / ACHIEVEMENTS" lead="A few" emphasis="milestones.">
+      {achievements.map(item => <div class="entry"><p>{item}</p></div>)}
+    </EditorialSection>
+    <section class="contact-section" id="contact" aria-labelledby="contact-title"><div class="wrap contact-inner"><div class="section-label">05 / CONTACT</div><div><h2 id="contact-title" tabindex="-1">Let’s talk<br />about data<span class="period">.</span></h2><p>Find me on LinkedIn or explore my work on GitHub.</p><div class="contact-links"><a href="https://www.linkedin.com/in/arvinanto/">LinkedIn <span aria-hidden="true">↗</span></a><a href="https://github.com/suxeno">GitHub <span aria-hidden="true">↗</span></a><a href="https://medium.com/@arvinantobahtiar">Medium <span aria-hidden="true">↗</span></a></div></div></div>
+    </section>
+  </main>
+  <footer class="wrap"><span>ARVIN / PROFILE</span><nav aria-label="Footer navigation"><a href="#writing">Writing</a><a href="#projects">Projects</a><a href="#experience">Experience</a><a href="#achievements">Achievements</a><a href="#contact">Contact</a></nav><a href="#top">Back to top ↑</a></footer>
+<script>import "../main";</script>
+</body>
+</html>

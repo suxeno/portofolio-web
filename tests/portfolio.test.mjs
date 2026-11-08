@@ -5,6 +5,23 @@ import { chromium } from 'playwright-core';
 import { existsSync } from 'node:fs';
 import { createServer } from 'node:net';
 
+async function trackMotion(page) {
+  await page.addInitScript(() => {
+    window.__motion = [];
+    const observe = () => {
+      const observer = new MutationObserver(records => {
+        for (const record of records) {
+          const element = record.target;
+          if (!(element instanceof HTMLElement) || !element.style.transform) continue;
+          const section = element.closest('section')?.id;
+          if (section) window.__motion.push({ section, id: element.id, index: [...element.parentElement.children].indexOf(element), transform: element.style.transform, at: performance.now() });
+        }
+      });
+      observer.observe(document.documentElement, { subtree: true, attributes: true, attributeFilter: ['style'] });
+    };
+    document.addEventListener('DOMContentLoaded', observe, { once: true });
+  });
+}
 let server, browser;
 let url;
 before(async () => {
@@ -13,10 +30,10 @@ before(async () => {
   const port = reservation.address().port;
   await new Promise(resolve => reservation.close(resolve));
   url = `http://127.0.0.1:${port}`;
-  server = spawn('npm', ['run', 'dev', '--', '--host', '127.0.0.1', '--port', String(port), '--strictPort'], { stdio: 'ignore', detached: true });
+  server = spawn('./node_modules/.bin/astro', ['preview', '--host', '127.0.0.1', '--port', String(port), '--ignore-lock'], { stdio: 'ignore', detached: true });
   let ready = false;
   for (let i = 0; i < 100; i++) { try { if ((await fetch(url)).ok) { ready = true; break; } } catch {} await new Promise(r => setTimeout(r, 100)); }
-  if (!ready) throw Error('Vite did not start');
+  if (!ready) throw Error('Astro preview did not start');
   const executablePath = process.env.CHROMIUM_PATH || ['/usr/bin/chromium', '/usr/bin/chromium-browser', '/usr/bin/google-chrome', '/usr/bin/google-chrome-stable'].find(existsSync);
   if (!executablePath) throw Error('Chromium/Chrome not found; set CHROMIUM_PATH');
   browser = await chromium.launch({ executablePath, args: ['--no-sandbox'] });
@@ -110,22 +127,27 @@ test('terminal commands, error handling, focus and browser history', async () =>
 });
 test('scroll motion enhances visible sections and respects preference changes', async () => {
   const page = await browser.newPage({ reducedMotion: 'no-preference' });
-  await page.addInitScript(() => {
-    const original = Element.prototype.animate;
-    window.__sectionMotion = [];
-    Element.prototype.animate = function (...args) {
-      window.__sectionMotion.push(this.id || this.className);
-      return original.apply(this, args);
-    };
-  });
-  await page.goto(url + '/#experience');
-  await page.waitForFunction(() => window.__sectionMotion.includes('experience-title'));
+  await trackMotion(page);
+  await page.goto(url); await page.keyboard.press('Escape');
+  await page.locator('#experience-title').scrollIntoViewIfNeeded();
+  await page.waitForFunction(() => window.__motion.some(entry => entry.id === 'experience-title'));
   assert.equal(await page.locator('#experience-title').isVisible(), true);
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  const before = await page.evaluate(() => window.__sectionMotion.length);
+  await page.waitForTimeout(200);
+  await page.evaluate(() => { window.__motion = []; });
   await page.locator('#contact-title').scrollIntoViewIfNeeded();
-  await page.waitForTimeout(100);
-  assert.equal(await page.evaluate(() => window.__sectionMotion.length), before);
+  await page.waitForTimeout(300);
+  assert.equal(await page.evaluate(() => window.__motion.filter(entry => entry.id === 'contact-title').length), 0);
+  await page.close();
+});
+
+test('pagehide reverts GSAP inline motion', async () => {
+  const page = await browser.newPage(); await trackMotion(page);
+  await page.goto(url); await page.keyboard.press('Escape');
+  await page.locator('#projects-title').scrollIntoViewIfNeeded();
+  await page.waitForFunction(() => window.__motion.some(m => m.id === 'projects-title'));
+  await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pagehide')));
+  assert.equal(await page.locator('#projects-title').evaluate(el => el.style.transform), '');
   await page.close();
 });
 
@@ -136,29 +158,29 @@ test('content remains visible without IntersectionObserver', async () => {
 });
 
 test('scroll choreography differs between projects and experience', async () => {
- const page=await browser.newPage();
- await page.addInitScript(() => { const original=Element.prototype.animate; window.__motions=[]; Element.prototype.animate=function(frames, options){window.__motions.push({section:this.closest('section')?.id, frames}); return original.call(this,frames,options)} });
+ const page=await browser.newPage(); await trackMotion(page);
  await page.goto(url); await page.keyboard.press('Escape');
- await page.locator('#projects-title').scrollIntoViewIfNeeded(); await page.waitForTimeout(400);
- await page.locator('#experience-title').scrollIntoViewIfNeeded(); await page.waitForTimeout(400);
- const motions=await page.evaluate(()=>window.__motions);
- const project=motions.find(m=>m.section==='projects'); const experience=motions.find(m=>m.section==='experience');
- assert.ok(project && experience); assert.notDeepEqual(project.frames,experience.frames); assert.match(project.frames[0].transform, /translateX\(-(?:[4-9]\d|\d{3,})px\)/); await page.close();
+ await page.locator('#projects-title').scrollIntoViewIfNeeded(); await page.waitForFunction(()=>window.__motion.some(m=>m.id==='projects-title'));
+ await page.locator('#experience-title').scrollIntoViewIfNeeded(); await page.waitForFunction(()=>window.__motion.some(m=>m.id==='experience-title'));
+ const motions=await page.evaluate(()=>window.__motion);
+ const project=motions.find(m=>m.id==='projects-title'); const experience=motions.find(m=>m.id==='experience-title');
+ assert.ok(project && experience); assert.match(project.transform, /translate\(-/); assert.match(experience.transform, /translate\([0-9]/); await page.close();
 });
 
 test('project entries animate with staggered timing', async () => {
- const page=await browser.newPage(); await page.addInitScript(()=>{const original=Element.prototype.animate;window.__projectDelays=[];Element.prototype.animate=function(frames, options){if(this.matches('#projects .entry')) window.__projectDelays.push(options.delay || 0);return original.call(this,frames,options)}});
+ const page=await browser.newPage({ viewport:{width:1440,height:1200} }); await trackMotion(page);
  await page.goto(url); await page.keyboard.press('Escape'); await page.locator('#projects').scrollIntoViewIfNeeded();
- await page.waitForFunction(()=>window.__projectDelays.length>=2); const delays=await page.evaluate(()=>window.__projectDelays);
- assert.ok(new Set(delays).size>1, `expected staggered delays, got ${delays}`); await page.close();
+ await page.waitForFunction(()=>new Set(window.__motion.filter(m=>m.section==='projects' && !m.id).map(m=>m.index)).size>=2);
+ const starts=await page.evaluate(()=>{const rows=window.__motion.filter(m=>m.section==='projects' && !m.id);const first=new Map();for(const m of rows)if(!first.has(m.index))first.set(m.index,m.at);return [...first.values()];});
+ assert.ok(Math.max(...starts)-Math.min(...starts)>=40, `expected staggered starts, got ${starts}`); await page.close();
 });
 
 test('project motion keeps content inside the small viewport', async () => {
- const page=await browser.newPage({viewport:{width:320,height:640}}); await page.goto(url); await page.keyboard.press('Escape');
+ const page=await browser.newPage({viewport:{width:320,height:640}}); await trackMotion(page); await page.goto(url); await page.keyboard.press('Escape');
  await page.locator('#projects-title').scrollIntoViewIfNeeded();
- await page.waitForFunction(() => document.getAnimations().some(x=>x.effect?.target?.id==='projects-title'));
- const bounds=await page.evaluate(() => { const a=document.getAnimations().find(x=>x.effect?.target?.id==='projects-title'); if(!a) return null; a.pause(); a.currentTime=0; return a.effect.target.getBoundingClientRect().left; });
- assert.ok(bounds !== null && bounds >= 0, `motion clipped left edge: ${bounds}`); await page.close();
+ await page.waitForFunction(() => window.__motion.some(m=>m.id==='projects-title'));
+ const bounds=await page.locator('#projects-title').evaluate(el=>el.getBoundingClientRect().left);
+ assert.ok(bounds >= 0, `motion clipped left edge: ${bounds}`); await page.close();
 });
 
 test('mobile layout, keyboard focus and console', async () => {

@@ -1,4 +1,4 @@
-import './terminal';
+import './motion';
 
 const sections = ['experience', 'projects', 'about', 'contact'] as const;
 
@@ -71,35 +71,3 @@ function startIntro(): void {
   timer = window.setTimeout(dismiss, 5000);
 }
 startIntro();
-
-// Progressive enhancement: the document stays visible if motion is unavailable.
-function enhanceSectionMotion(): void {
-  const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
-  if (preference.matches || !('IntersectionObserver' in window) || !Element.prototype.animate) return;
-  const animations = new Set<Animation>();
-  const observer = new IntersectionObserver(entries => {
-    for (const entry of entries) {
-      if (!entry.isIntersecting) continue;
-      observer.unobserve(entry.target);
-      if (preference.matches) continue;
-      const section = entry.target.closest('section')?.id;
-      const from = section === 'projects' ? (window.matchMedia('(max-width: 600px)').matches ? 'translateX(-12px)' : 'translateX(-48px)') : section === 'experience' ? (window.matchMedia('(max-width: 600px)').matches ? 'translateY(18px)' : 'translateX(18px)') : section === 'writing' ? 'translateY(22px)' : 'translateY(12px)';
-      const rows = section === 'projects' ? [...(entry.target.closest('#projects')?.querySelectorAll('.entry') ?? [])] : [];
-      const index = rows.indexOf(entry.target);
-      const animation = entry.target.animate(
-        [{ transform: from }, { transform: 'translate(0, 0)' }],
-        { duration: section === 'projects' ? 700 : 520, delay: index < 0 ? 0 : index * 90, fill: 'backwards', easing: 'cubic-bezier(.22,1,.36,1)' },
-      );
-      animations.add(animation);
-      animation.onfinish = () => animations.delete(animation);
-    }
-  }, { threshold: 0.15 });
-  document.querySelectorAll('.editorial h2, .editorial .entry, .project-line, .about-copy, .contact-inner h2').forEach(element => observer.observe(element));
-  preference.addEventListener('change', () => {
-    if (!preference.matches) return;
-    observer.disconnect();
-    animations.forEach(animation => animation.cancel());
-    animations.clear();
-  });
-}
-enhanceSectionMotion();
