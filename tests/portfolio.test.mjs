@@ -36,7 +36,7 @@ before(async () => {
   if (!ready) throw Error('Astro preview did not start');
   const executablePath = process.env.CHROMIUM_PATH || ['/usr/bin/chromium', '/usr/bin/chromium-browser', '/usr/bin/google-chrome', '/usr/bin/google-chrome-stable'].find(existsSync);
   if (!executablePath) throw Error('Chromium/Chrome not found; set CHROMIUM_PATH');
-  browser = await chromium.launch({ executablePath, args: ['--no-sandbox'] });
+  browser = await chromium.launch({ executablePath, args: ['--no-sandbox', '--disable-gpu'] });
 });
 after(async () => {
   await browser?.close();
@@ -256,17 +256,128 @@ test('hero is one terminal containing identity and navigation without JavaScript
  await page.close();
 });
 
-test('boot and landing use the same geometric lettering asset', async () => {
+test('landing and command output omit obsolete terminal and academic labels', async () => {
+ const page = await browser.newPage({reducedMotion: 'reduce'}); await page.goto(url);
+ assert.doesNotMatch(await page.locator('#top').innerText(), /simulated terminal|Data Science · Telkom University/i);
+ const input = page.getByRole('textbox', {name: 'Command'});
+ await input.fill('cat README.md'); await input.press('Enter');
+ assert.doesNotMatch(await page.locator('#terminal-output').innerText(), /Data Science · Telkom University/i);
+ await page.close();
+});
+
+test('role stays on one line at 390px and never overflows at 320px', async () => {
+ for (const width of [320,390,1440]) {
+  const page=await browser.newPage({viewport:{width,height:900},reducedMotion:'reduce'}); await page.goto(url);
+  const result=await page.locator('.role').evaluate(el=>{const range=document.createRange();range.selectNodeContents(el);return {lines:range.getClientRects().length,overflow:document.documentElement.scrollWidth>innerWidth}});
+  if(width>=390) assert.equal(result.lines,1,`role wraps at ${width}`);
+  assert.equal(result.overflow,false); await page.close();
+ }
+});
+
+test('title dominates role and fits the viewport', async () => {
+ for (const width of [320, 390, 1440]) {
+  const page=await browser.newPage({viewport:{width,height:900},reducedMotion:'reduce'}); await page.goto(url);
+  const metrics=await page.evaluate(() => ({title:parseFloat(getComputedStyle(document.querySelector('#hero-title')).fontSize), role:parseFloat(getComputedStyle(document.querySelector('.role')).fontSize), right:document.querySelector('#hero-title').getBoundingClientRect().right}));
+  assert.ok(metrics.title >= 64 && metrics.title >= metrics.role * 3, JSON.stringify(metrics));
+  assert.ok(metrics.right <= width, JSON.stringify(metrics)); await page.close();
+ }
+});
+
+test('role line contains a literal separator', async () => {
+ const page = await browser.newPage({ javaScriptEnabled: false }); await page.goto(url);
+ assert.equal((await page.locator('.role').textContent()).trim(), 'Data Engineering | ML/AI Engineering');
+ await page.close();
+});
+
+test('visitor-facing introduction avoids simulated and demo wording', async () => {
+ const page=await browser.newPage(); await page.goto(url); await page.locator('.boot').waitFor();
+ const visible=await page.locator('body').innerText();
+ const labels=await page.locator('[aria-label]').evaluateAll(nodes=>nodes.map(n=>n.getAttribute('aria-label')).join(' '));
+ assert.doesNotMatch(`${visible} ${labels}`, /simulat(?:ed|ion)|\bdemo\b/i);
+ await page.close();
+});
+
+test('intro has no obsolete personal profile footer', async () => {
  const page = await browser.newPage(); await page.goto(url);
- const heroSrc=await page.locator('#hero-title img').getAttribute('src');
- assert.equal(await page.locator('.boot img.arvin-glyph').getAttribute('src', {timeout:2000}), heroSrc);
+ assert.equal(await page.locator('.boot-footer').count(), 0);
+ await page.close();
+});
+
+test('wordmark pixels animate and can be paused', async () => {
+ const page=await browser.newPage(); await page.goto(url); await page.keyboard.press('Escape');
+ const title=page.locator('#hero-title');
+ assert.notEqual(await title.evaluate(el=>getComputedStyle(el,'::after').animationName), 'none');
+ const toggle=page.getByRole('button',{name:'Pause title animation'}); assert.equal(await toggle.textContent(), 'Arvin');
+ await toggle.focus(); await page.keyboard.press('Enter');
+ assert.equal(await title.evaluate(el=>getComputedStyle(el,'::after').animationPlayState), 'paused');
+ await page.keyboard.press('Space');
+ assert.equal(await title.evaluate(el=>getComputedStyle(el,'::after').animationPlayState), 'running');
+ await page.emulateMedia({reducedMotion:'reduce'});
+ assert.equal(await title.evaluate(el=>getComputedStyle(el,'::after').animationName), 'none'); await page.close();
+});
+
+test('command input presents a steady bar at the insertion point', async () => {
+ const page = await browser.newPage({reducedMotion:'reduce'}); await page.goto(url);
+ const input=page.locator('#command'); await input.fill('abcd'); await input.focus();
+ await input.evaluate(el => el.setSelectionRange(2,2));
+ await page.evaluate(() => document.dispatchEvent(new Event('selectionchange')));
+ const caret=page.locator('.command-caret');
+ assert.equal(await caret.isVisible(), true);
+ assert.ok((await caret.boundingBox()).width >= 3);
+ const start=(await caret.boundingBox()).x;
+ await input.press('ArrowLeft');
+ assert.ok((await caret.boundingBox()).x < start);
+ await input.press('Shift+ArrowLeft');
+ assert.equal(await caret.isVisible(), false);
+ await page.close();
+});
+
+test('terminal does not intercept IME composition keys', async () => {
+ const page=await browser.newPage({reducedMotion:'reduce'}); await page.goto(url);
+ const result=await page.locator('#command').evaluate(el=>{el.focus(); const event=new KeyboardEvent('keydown',{key:'ArrowUp',isComposing:true,bubbles:true,cancelable:true}); el.dispatchEvent(event); return event.defaultPrevented});
+ assert.equal(result,false); await page.close();
+});
+
+test('command caret keeps native editing and composition usable', async () => {
+ const page=await browser.newPage({viewport:{width:320,height:640},reducedMotion:'reduce'}); await page.goto(url);
+ const input=page.locator('#command'); await input.click();
+ assert.equal(await input.evaluate(el=>getComputedStyle(el).outlineStyle),'none');
+ assert.notEqual(await page.locator('.command-line').evaluate(el=>getComputedStyle(el).borderBottomColor),'rgba(0, 0, 0, 0)');
+ await input.fill('x'.repeat(75)); await input.press('End');
+ assert.ok(await input.evaluate(el=>el.scrollLeft)>0);
+ const box=await page.locator('.command-caret').boundingBox(), bounds=await input.boundingBox();
+ assert.ok(box.x>=bounds.x && box.x<=bounds.x+bounds.width);
+ await input.dispatchEvent('compositionstart');
+ assert.equal(await page.locator('.command-caret').isVisible(),false);
+ assert.notEqual(await input.evaluate(el=>getComputedStyle(el).caretColor),'rgba(0, 0, 0, 0)');
+ assert.equal(await input.evaluate(el=>getComputedStyle(el).getPropertyValue('caret-animation')),'manual');
+ await input.dispatchEvent('compositionend'); await page.close();
+});
+
+test('body and editorial copy use JetBrains Mono', async () => {
+ const page = await browser.newPage({reducedMotion: 'reduce'}); await page.goto(url);
+ for (const selector of ['body', '.editorial h2 em', '.editorial .entry p']) {
+   assert.match(await page.locator(selector).first().evaluate(el => getComputedStyle(el).fontFamily), /JetBrainsMono/i);
+ }
+ await page.close();
+});
+
+test('boot and landing use Silkscreen lettering', async () => {
+ const page = await browser.newPage(); await page.goto(url);
+ await page.evaluate(() => document.fonts.ready);
+ assert.match(await page.locator('#hero-title').evaluate(el => getComputedStyle(el).fontFamily), /Silkscreen/i);
+ assert.match(await page.locator('.boot-glyph').evaluate(el => getComputedStyle(el).fontFamily), /Silkscreen/i);
+ for (const selector of ['#hero-title', '.boot-glyph']) {
+   assert.equal(await page.locator(selector).evaluate(el => getComputedStyle(el).fontWeight), '700');
+ }
+ assert.equal(await page.evaluate(() => [...document.fonts].some(f => f.family === 'Silkscreen' && f.weight === '700' && f.status === 'loaded')), true);
  await page.close();
 });
 
 test('page and editorial sections use dark backgrounds and light text', async () => {
  const page=await browser.newPage({reducedMotion:'reduce'}); await page.goto(url);
  const colors=await page.evaluate(() => ({bg:getComputedStyle(document.documentElement).backgroundColor, fg:getComputedStyle(document.body).color}));
- assert.equal(colors.bg, 'rgb(0, 0, 0)'); assert.equal(colors.fg, 'rgb(245, 245, 240)'); await page.close();
+ assert.equal(colors.bg, 'rgb(23, 23, 23)'); assert.equal(colors.fg, 'rgb(245, 245, 240)'); await page.close();
 });
 
 test('portfolio publishes source-backed sections in requested order', async () => {

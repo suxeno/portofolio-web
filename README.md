@@ -17,7 +17,7 @@ bun run check:deploy  # credential-free dry run, not a deployment
 
 - `src/pages/` is the Astro page; `src/components/` contains the shared section and Vue terminal.
 - `src/content.ts` holds editable writing, project, experience and achievement records. Verify changes against `docs/content-sources.md`; drafts are explicitly labeled and external writing links stay on Medium.
-- `src/shell.ts` is the DOM-independent simulated command parser; `src/motion.ts` owns scroll motion; `src/style.css` contains design tokens and styles. Fonts and the shared ARVIN glyph are self-hosted under `public/`.
+- `src/shell.ts` is the DOM-independent simulated command parser; `src/motion.ts` owns scroll motion; `src/style.css` contains design tokens and styles. JetBrains Mono and Silkscreen Bold 700 are self-hosted under `public/fonts/` with their licenses; the former SVG title is retired.
 
 ## Deployment
 

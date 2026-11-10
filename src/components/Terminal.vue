@@ -1,10 +1,29 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, nextTick, onMounted, onUnmounted } from 'vue';
 import { directories, runCommand, type Result } from '../shell';
+
+const commandInput = ref<HTMLInputElement | null>(null);
+const measure = ref<HTMLElement | null>(null);
+const caretX = ref(0);
+const showCaret = ref(false);
+const composing = ref(false);
+async function updateCaret() {
+  await nextTick();
+  const input = commandInput.value;
+  const ruler = measure.value;
+  if (!input || !ruler) return;
+  showCaret.value = document.activeElement === input && !composing.value && input.selectionStart === input.selectionEnd;
+  ruler.textContent = input.value.slice(0, input.selectionStart ?? 0);
+  caretX.value = Math.max(0, Math.min(input.clientWidth - 3, ruler.getBoundingClientRect().width - input.scrollLeft));
+}
+function compositionStart() { composing.value = true; void updateCaret(); }
+function compositionEnd() { composing.value = false; void updateCaret(); }
+onMounted(() => { document.addEventListener('selectionchange', updateCaret); window.addEventListener('resize', updateCaret); });
+onUnmounted(() => { document.removeEventListener('selectionchange', updateCaret); window.removeEventListener('resize', updateCaret); });
 
 const cwd = ref('/home/arvin');
 const command = ref('');
-const output = ref<Result>({ cwd: cwd.value, output: 'Simulated terminal. Type help or choose a directory.' });
+const output = ref<Result>({ cwd: cwd.value, output: 'Type help or choose a directory.' });
 const transcript = ref<string[]>([]);
 const history: string[] = [];
 let historyIndex = 0;
@@ -31,6 +50,7 @@ function submit() {
   command.value = '';
 }
 function onKey(event: KeyboardEvent) {
+  if (event.isComposing || composing.value) return;
   if (event.key === 'Tab' && !event.shiftKey && cwd.value === '/home/arvin') {
     const match = /^(cd\s+)([a-z]+)$/.exec(command.value);
     if (match) {
@@ -47,6 +67,6 @@ function onKey(event: KeyboardEvent) {
 </script>
 <template>
   <div id="transcript" aria-label="Command transcript"><p v-for="(line, index) in transcript" :key="index">{{ line }}</p></div>
-  <form id="command-form" @submit.prevent="submit"><label for="command">Command</label><div class="command-line"><span class="command-prompt" aria-hidden="true">{{ prompt }}</span><input id="command" v-model="command" name="command" maxlength="80" autocomplete="off" spellcheck="false" placeholder="type help" @keydown="onKey" /><button type="submit">Run</button></div></form>
+  <form id="command-form" @submit.prevent="submit"><label for="command">Command</label><div class="command-line"><span class="command-prompt" aria-hidden="true">{{ prompt }}</span><span class="command-input-wrap"><input ref="commandInput" id="command" v-model="command" name="command" maxlength="80" autocomplete="off" spellcheck="false" placeholder="type help" :class="{ composing }" @keydown="onKey" @keyup="updateCaret" @input="updateCaret" @focus="updateCaret" @blur="updateCaret" @click="updateCaret" @scroll="updateCaret" @compositionstart="compositionStart" @compositionend="compositionEnd" /><span ref="measure" class="command-measure" aria-hidden="true"></span><span v-show="showCaret" class="command-caret" :style="{ left: `${caretX}px` }" aria-hidden="true"></span></span><button type="submit">Run</button></div></form>
   <p id="terminal-output" class="terminal-output" role="status" aria-live="polite"><template v-if="output.listing"><template v-if="output.listing.all">./  ../  </template><template v-for="name in output.listing.names" :key="name">{{ output.listing.long ? 'dr-x ' : '' }}<a :href="`#${name}`">{{ name }}/</a>  </template>{{ output.listing.long ? '-r-- ' : '' }}<a href="#readme">README.md</a></template><template v-else>{{ output.output }}</template></p>
 </template>

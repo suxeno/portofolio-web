@@ -8,7 +8,7 @@ export function runCommand(cwd: string, raw: string): Result {
   if (!command) return result('Enter a command or choose a link.');
   if (command === 'whoami') return result('arvin');
   if (command === 'pwd') return result(cwd);
-  if (command === 'cat readme.md') return result('Arvin — Data Engineering and ML/AI Engineering. Data Science · Telkom University.');
+  if (command === 'cat readme.md') return result('Arvin — Data Engineering and ML/AI Engineering.');
   if (command === 'help') return result('Commands: writing, projects, experience, achievements, contact, help, clear. Section commands navigate the page. Also: ls, cd, pwd, cat README.md, whoami.');
   if (command === 'clear') return { ...result(), clear: true };
   if (command === 'ls' || command.startsWith('ls ')) {

@@ -6,8 +6,8 @@ function startIntro(): void {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   const overlay = document.createElement('div');
   overlay.className = 'boot';
-  overlay.setAttribute('aria-label', 'Simulated profile introduction');
-  overlay.innerHTML = `<div class="boot-inner"><div class="boot-header"><span>ARVIN / PROFILE</span><button type="button">Skip intro <span aria-hidden="true">↗</span></button></div><div class="boot-body"><p class="boot-caption">SIMULATED PACKAGE UPDATE / DEMO TRANSFER VALUES</p><img class="arvin-glyph boot-glyph" src="/arvin.svg" alt="Arvin" /><p class="boot-name">arvin profile</p><div class="boot-packages" aria-hidden="true"><p class="boot-summary"></p><div class="boot-table"></div><div class="boot-total"></div><div class="boot-transaction"></div></div></div><div class="boot-footer">PERSONAL PROFILE <span>2026</span></div></div>`;
+  overlay.setAttribute('aria-label', 'Profile introduction');
+  overlay.innerHTML = `<div class="boot-inner"><div class="boot-header"><span>ARVIN / PROFILE</span><button type="button">Skip intro <span aria-hidden="true">↗</span></button></div><div class="boot-body"><p class="boot-caption">LOADING PROFILE MODULES</p><div class="boot-glyph">Arvin</div><p class="boot-name">arvin profile</p><div class="boot-packages" aria-hidden="true"><p class="boot-summary"></p><div class="boot-table"></div><div class="boot-total"></div><div class="boot-transaction"></div></div></div></div>`;
   document.body.append(overlay);
   let timer: number;
   let interval: number | undefined;
@@ -52,7 +52,7 @@ function startIntro(): void {
       'Running transaction',
       '[1/3] Verify profile files   100%',
       '[2/3] Prepare profile       100%',
-      '[3/3] Installing arvin-profile   100%',
+      '[3/3] Loading arvin-profile      100%',
       'Complete!',
     ];
     const transactionStart = downloadDuration + 300;
@@ -69,5 +69,13 @@ function startIntro(): void {
 
   document.addEventListener('click', onAnchor);
   timer = window.setTimeout(dismiss, 5000);
+}
+const motionToggle = document.querySelector<HTMLButtonElement>('.motion-toggle');
+if (motionToggle) {
+  motionToggle.addEventListener('click', () => {
+    const paused = document.body.classList.toggle('title-paused');
+    motionToggle.setAttribute('aria-label', paused ? 'Resume title animation' : 'Pause title animation');
+    motionToggle.setAttribute('aria-pressed', String(paused));
+  });
 }
 startIntro();
