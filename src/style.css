@@ -49,7 +49,7 @@ body{background:var(--base);color:inherit}.intro,.wordmark span,.entry-date,.ent
 @font-face{font-family:JetBrainsMono;src:url('/fonts/JetBrainsMono-Regular.ttf') format('truetype');font-weight:400;font-style:normal;font-display:swap}
 .entry p:last-child{color:#c5c5c0}.hero{padding:40px 0 70px}.hero .terminal{padding:clamp(20px,4vw,50px)}.terminal h1{margin:36px 0}.terminal .role{font-size:clamp(18px,2.2vw,28px);line-height:1.3;color:#fff}.terminal .intro{font-size:16px;max-width:50ch}.intro-ending{white-space:nowrap}.terminal-list{margin:12px 0 20px}.terminal-list a{font-size:14px}.command-line{flex-wrap:wrap}.command-prompt{font-size:12px;white-space:nowrap}.command-line input{flex:1;width:auto}.editorial .entry{padding:24px 0}.editorial h2 em{font-weight:400}.contact-section{border-top:1px solid #777}.site-header nav a{display:inline-flex;align-items:center;min-height:44px}
 
-footer{flex-wrap:wrap;padding:24px 0}footer nav{display:flex;flex-wrap:wrap;gap:0 20px}footer nav a{min-height:44px;display:inline-flex;align-items:center}.contact-links{flex-wrap:wrap}
+footer{flex-wrap:wrap;padding:24px 0}footer nav{display:flex;flex-wrap:wrap;gap:0 20px}footer nav a{min-height:44px;display:inline-flex;align-items:center}.contact-links{flex-wrap:wrap}.contact-links a{flex:0 1 auto;max-width:100%;overflow-wrap:anywhere}
 #transcript{max-height:15rem;overflow-y:auto;overflow-wrap:anywhere;white-space:pre-wrap}#transcript p{margin:0 0 1em}.terminal-output a{display:inline-flex;align-items:center;min-height:44px;margin-right:1em}.terminal-output{overflow-wrap:anywhere}
 
 @font-face{font-family:Silkscreen;src:url("/fonts/Silkscreen-Bold.woff2") format("woff2");font-weight:700;font-display:swap}
@@ -59,4 +59,24 @@ footer{flex-wrap:wrap;padding:24px 0}footer nav{display:flex;flex-wrap:wrap;gap:
 
 #hero-title,.boot-glyph{position:relative;width:max-content;max-width:100%}#hero-title::after,.boot-glyph::after{content:"";display:inline-block;vertical-align:top;width:.08em;height:.08em;margin:.24em 0 0 .14em;background:currentColor;box-shadow:.14em .14em currentColor;animation:pixel-pulse 4s steps(1,end) infinite;pointer-events:none}@keyframes pixel-pulse{0%,60%{opacity:1}61%,85%{opacity:.2}86%,100%{opacity:1}}.title-paused #hero-title::after{animation-play-state:paused}.motion-toggle{background:none;border:0;color:inherit;padding:0;font:inherit;text-transform:inherit;cursor:pointer}.motion-toggle:focus-visible{outline:2px solid currentColor;outline-offset:4px}
 
-@media(max-width:480px){.terminal .role{font-size:13px}}
+@media(max-width:480px){.terminal .role{font-size:13px} #hero-title::after{position:absolute;right:0;top:.24em;margin:0;transform:translateX(50%)}}
+
+/* Landing layout is scoped away from the boot overlay. */
+.site-header.wrap,.hero.wrap,.editorial.wrap,.contact-inner.wrap,footer.wrap,.section-rule.wrap{width:min(calc(100% - 128px),1312px)}
+.site-header{min-height:84px;font-size:12px}.site-header .wordmark{font-size:12px;font-weight:400;letter-spacing:0}.site-header nav{gap:28px}.site-header nav a{font-size:12px}
+.hero .terminal-list a{text-decoration:none}.hero .terminal-list a:hover{text-decoration:underline}
+@media(max-width:899px){.site-header.wrap,.hero.wrap,.editorial.wrap,.contact-inner.wrap,footer.wrap,.section-rule.wrap{width:calc(100% - 40px)}.site-header{align-items:flex-start;flex-direction:column;padding:20px 0;gap:4px}.site-header nav{gap:0 8px}.site-header nav a{font-size:11px}}
+.hero .terminal{border:0;padding:0}.hero{padding:64px 0 100px}
+.hero .terminal-output{max-height:150px;overflow:auto;white-space:pre-wrap}
+.hero .terminal-output:empty{display:none}.command-hint{font-size:11px;color:#b8b8b1;margin-top:12px}
+.editorial{display:block;border-top:1px solid #555;padding:100px 0}
+.editorial .section-label{text-align:right}.editorial h2,.contact-inner h2{font-size:clamp(30px,4vw,52px);font-weight:400}
+.editorial .entry{border-bottom:1px solid #555}
+#experience .entry{display:grid;grid-template-columns:220px minmax(0,1fr) 200px;gap:20px}#experience .entry h3,#experience .entry p{margin:0}@media(max-width:899px){#experience .entry{grid-template-columns:1fr;gap:8px}}
+#writing .entry{display:block}#writing .writing-link{display:grid;grid-template-columns:180px 1fr auto;gap:20px;align-items:center;text-decoration:none}#writing .writing-link span{font-size:11px;color:#b8b8b1}#writing .writing-link strong{font-size:clamp(17px,2vw,23px);font-weight:400}#writing .writing-link:hover strong{text-decoration:underline}
+@media(max-width:899px){#writing .writing-link{grid-template-columns:1fr;gap:10px}}
+.contact-inner{display:block}.contact-links a[href^="mailto:"]{flex-basis:100%;font-size:clamp(17px,3vw,34px);overflow-wrap:anywhere;margin-bottom:30px}
+.slider-controls{display:flex;justify-content:flex-end;gap:12px}.slider-controls button{background:transparent;border:1px solid #777;color:inherit;min-width:44px;min-height:44px;cursor:pointer}
+.project-slider{display:flex;gap:24px;overflow-x:auto;scroll-snap-type:x mandatory;position:relative}.project-slider .entry{flex:0 0 min(70%,480px);scroll-snap-align:start;min-width:0}.project-image{height:220px;background:#292929;display:grid;place-items:center;color:#aaa;font-size:12px}
+@media(max-width:600px){.project-slider .entry{flex-basis:90%}}
+.article-page{padding:80px 0;min-height:80vh}.article-page article{margin-top:90px}.article-page h1{font-size:clamp(32px,6vw,70px);max-width:900px}.article-page p{max-width:70ch;line-height:1.8}.article-cover{min-height:240px;display:grid;place-items:center;background:#292929;color:#aaa;font-size:12px;margin:40px 0}

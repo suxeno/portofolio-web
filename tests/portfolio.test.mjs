@@ -44,6 +44,126 @@ after(async () => {
     try { process.kill(-server.pid, 'SIGTERM'); } catch (error) { if (error.code !== 'ESRCH') throw error; }
   }
 });
+test('three sample writings lead to native article pages with a return link', async () => {
+  const page = await browser.newPage({ javaScriptEnabled: false }); await page.goto(url);
+  const links = page.locator('#writing a[href^="/writing/"]');
+  assert.equal(await links.count(), 3);
+  assert.equal(await page.locator('#writing a[href*="medium.com"]').count(), 0);
+  for (let i=0;i<3;i++) {
+    const href = await links.nth(i).getAttribute('href');
+    await page.goto(url + href); assert.match(await page.locator('main').innerText(), /sample draft/i);
+    assert.equal(await page.locator('a[href="/#writing"]').count(), 1);
+    assert.match(await page.locator('main').innerText(), /DUMMY COVER IMAGE/);
+    await page.goto(url);
+  }
+  await page.close();
+});
+
+test('career section keeps four approved roles and contact includes email', async () => {
+ const page=await browser.newPage({javaScriptEnabled:false}); await page.goto(url);
+ const career=page.locator('#experience');
+ assert.equal(await career.locator('.entry').count(),4);
+ assert.doesNotMatch(await career.innerText(), /Academic Office Student Staff|id\/x partners/i);
+ assert.equal(await page.locator('#contact a[href="mailto:arvinantobahtiar@gmail.com"]').count(),1);
+ await page.close();
+});
+
+test('section headings and full-width divider edges match the content area', async () => {
+ for (const width of [1440,1366,1280,390,320]) {
+  const page=await browser.newPage({viewport:{width,height:900},reducedMotion:'reduce'}); await page.goto(url);
+  for (const [id,title] of [['writing','Writings'],['projects','Projects'],['experience','Experience'],['achievements','Achievements'],['contact','Contact']]) assert.equal((await page.locator(`#${id}-title`).innerText()).trim(),title);
+  const edges=await page.evaluate(()=>({right:document.querySelector('#top').getBoundingClientRect().right,terminal:document.querySelector('.command-line').getBoundingClientRect().right,awards:[...document.querySelectorAll('#achievements .entry')].map(e=>e.getBoundingClientRect().right)}));
+  assert.equal(edges.terminal,edges.right,`terminal ${width}`); assert.equal(edges.awards.length,4); for(const edge of edges.awards) assert.equal(edge,edges.right,`achievement ${width}`);
+  await page.close();
+ }
+});
+
+test('project slider moves manually with buttons and keyboard', async () => {
+ const page=await browser.newPage({viewport:{width:390,height:844},reducedMotion:'reduce'}); await page.goto(url);
+ const slider=page.locator('.project-slider'); const next=page.getByRole('button',{name:'Next project'}); const previous=page.getByRole('button',{name:'Previous project'});
+ assert.equal(await slider.locator('.entry').count(),3); await next.click();
+ const moved=await slider.evaluate(el=>el.scrollLeft); assert.ok(moved>0);
+ await previous.click(); assert.equal(await slider.evaluate(el=>el.scrollLeft),0);
+ await slider.focus(); await page.keyboard.press('ArrowRight'); assert.ok(await slider.evaluate(el=>el.scrollLeft)>0);
+ await page.close();
+});
+
+test('project slider supports touch scrolling without autoplay', async () => {
+ const context=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true,reducedMotion:'reduce'}); const page=await context.newPage(); await page.goto(url);
+ const slider=page.locator('.project-slider'); await slider.scrollIntoViewIfNeeded(); await page.waitForTimeout(300);
+ assert.equal(await slider.evaluate(el=>el.scrollLeft),0);
+ const box=await slider.boundingBox(); const cdp=await context.newCDPSession(page); const y=box.y+Math.min(100,box.height/2);
+ await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:box.x+box.width-20,y}]});
+ for(let x=box.x+box.width-40;x>box.x+40;x-=25) await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x,y}]});
+ await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]}); await page.waitForTimeout(500);
+ assert.ok(await slider.evaluate(el=>el.scrollLeft)>0); await context.close();
+});
+
+test('terminal begins with an empty output and a persistent help hint', async () => {
+ const page=await browser.newPage({reducedMotion:'reduce'}); await page.goto(url);
+ assert.equal(await page.locator('#terminal-output').textContent(),'');
+ assert.match(await page.locator('.terminal').innerText(),/Type help for commands\./);
+ await page.close();
+});
+
+test('terminal output precedes and never obscures the command input', async () => {
+ const page=await browser.newPage({viewport:{width:320,height:640},reducedMotion:'reduce'}); await page.goto(url);
+ const input=page.locator('#command'); await input.fill('help'); await input.press('Enter');
+ const positions=await page.evaluate(()=>({output:document.querySelector('#terminal-output').getBoundingClientRect().bottom, input:document.querySelector('.command-line').getBoundingClientRect().top}));
+ assert.ok(positions.output <= positions.input);
+ await page.close();
+});
+
+test('pixel title stays on one line on the smallest phone', async () => {
+ const page=await browser.newPage({viewport:{width:320,height:640},reducedMotion:'reduce'}); await page.goto(url);
+ const metrics=await page.locator('#hero-title').evaluate(el=>({height:el.getBoundingClientRect().height,line:parseFloat(getComputedStyle(el).lineHeight)}));
+ assert.ok(metrics.height <= metrics.line + 1, JSON.stringify(metrics)); await page.close();
+});
+
+test('portfolio navigation keeps five directory links and readme accessible', async () => {
+ const page=await browser.newPage({javaScriptEnabled:false}); await page.goto(url);
+ assert.equal(await page.locator('.terminal-list a').count(),5);
+ assert.equal(await page.locator('a[href="#readme"]').count(),1);
+ assert.equal((await page.locator('.site-header nav').innerText()).replace(/\s+/g,' ').trim(),'Writings Projects Experience Contact ↗');
+ await page.close();
+});
+
+test('hero is borderless and exposes a single command prompt', async () => {
+ const page=await browser.newPage({reducedMotion:'reduce'}); await page.goto(url);
+ assert.equal(await page.locator('#top').evaluate(el => (el.innerText.match(/arvin@portfolio:~\$/g)||[]).length),1);
+ assert.equal(await page.locator('.hero .terminal').evaluate(el => getComputedStyle(el).borderTopWidth),'0px');
+ assert.match(await page.locator('.terminal-list').innerText(),/Writings ↗/);
+ await page.close();
+});
+
+test('writing index presents numbered draft rows with clear article links', async () => {
+ const page=await browser.newPage({javaScriptEnabled:false}); await page.goto(url);
+ const rows=page.locator('#writing .entry'); assert.equal(await rows.count(),3);
+ for(let i=0;i<3;i++){const row=rows.nth(i); assert.match(await row.innerText(),new RegExp(`0${i+1} / SAMPLE DRAFT`)); assert.match(await row.innerText(),/Read article ↗/); assert.equal(await row.locator('a[href^="/writing/"]').count(),1);}
+ await page.close();
+});
+
+test('contact email is the primary contact action at desktop', async () => {
+ const page=await browser.newPage({viewport:{width:1440,height:900},reducedMotion:'reduce'}); await page.goto(url);
+ const email=page.locator('#contact a[href^="mailto:"]');
+ assert.ok(await email.evaluate(el=>parseFloat(getComputedStyle(el).fontSize))>=30);
+ await page.close();
+});
+
+test('experience uses separate date, role and organization columns on desktop', async () => {
+ const page=await browser.newPage({viewport:{width:1440,height:900},reducedMotion:'reduce'}); await page.goto(url);
+ const row=page.locator('#experience .entry').first();
+ const positions=await row.evaluate(el=>[el.querySelector('.entry-date'),el.querySelector('h3'),el.querySelector('p')].map(node=>node.getBoundingClientRect().left));
+ assert.ok(positions[0]<positions[1] && positions[1]<positions[2],JSON.stringify(positions)); await page.close();
+});
+
+test('article full page reload preserves the live loading intro', async () => {
+ const page=await browser.newPage(); await page.clock.install(); await page.clock.pauseAt(new Date(Date.now()+60000));
+ await page.goto(url + '/writing/reliable-pipelines/',{waitUntil:'domcontentloaded'});
+ assert.equal(await page.locator('.boot').count(),1); await page.clock.runFor(5100); assert.equal(await page.locator('.boot').count(),0);
+ await page.reload({waitUntil:'domcontentloaded'}); assert.equal(await page.locator('.boot').count(),1); await page.keyboard.press('Escape'); await page.close();
+});
+
 test('career content and contact work without JavaScript', async () => {
   const page = await browser.newPage({ javaScriptEnabled: false });
   await page.goto(url);
@@ -383,7 +503,7 @@ test('page and editorial sections use dark backgrounds and light text', async ()
 test('portfolio publishes source-backed sections in requested order', async () => {
  const page=await browser.newPage({javaScriptEnabled:false}); await page.goto(url);
  assert.deepEqual(await page.locator('main > section[id]').evaluateAll(nodes=>nodes.map(n=>n.id)), ['top','writing','projects','experience','achievements','contact']);
- assert.match(await page.locator('#writing').textContent(), /Redshift/);
+ assert.match(await page.locator('#writing').textContent(), /On building reliable pipelines/);
  assert.equal(await page.locator('#projects a[href*="github.com"]').count(),3);
  assert.match(await page.locator('#experience').textContent(), /Eratani/);
  assert.match(await page.locator('#achievements').textContent(), /DINAMIKA/); await page.close();
@@ -402,18 +522,27 @@ test('editorial copy has readable light foreground on dark page', async () => {
  assert.notEqual(color,'rgb(65, 65, 65)');await page.close();
 });
 
-test('injection-like command remains inert text in transcript and does not change cwd', async () => {
+test('injection-like command remains inert text in output and does not change cwd', async () => {
  const page=await browser.newPage({reducedMotion:'reduce'}); await page.goto(url); const input=page.getByRole('textbox',{name:'Command'});
  const payload='cd projects; <img src=x onerror=alert(1)>'; await input.fill(payload); await input.press('Enter');
- assert.equal(await page.locator('#transcript img').count(),0); assert.match(await page.locator('#transcript').textContent(), /<img/);
+ assert.equal(await page.locator('#terminal-output img').count(),0); assert.match(await page.locator('#terminal-output').textContent(), /<img/);
  await input.fill('pwd'); await input.press('Enter'); assert.equal(await page.locator('#terminal-output').textContent(),'/home/arvin'); await page.close();
 });
 
-test('terminal preserves a transcript and clear removes it', async () => {
+test('latest terminal response replaces previous commands without growing the page', async () => {
+ const page=await browser.newPage({reducedMotion:'reduce'}); await page.goto(url); const input=page.getByRole('textbox',{name:'Command'});
+ await input.fill('pwd'); await input.press('Enter');
+ for (let i=0;i<20;i++) { await input.fill('ls'); await input.press('Enter'); }
+ assert.doesNotMatch(await page.locator('#terminal-output').textContent(), /pwd/);
+ assert.ok(await page.locator('#terminal-output').evaluate(el => el.getBoundingClientRect().height) <= 160);
+ await page.close();
+});
+
+test('terminal replaces previous output and clear removes it', async () => {
  const page=await browser.newPage({reducedMotion:'reduce'}); await page.goto(url); const input=page.getByRole('textbox',{name:'Command'});
  for (const cmd of ['pwd','whoami']) { await input.fill(cmd); await input.press('Enter'); }
- assert.match(await page.locator('#transcript').textContent(), /pwd[\s\S]*\/home\/arvin[\s\S]*whoami[\s\S]*arvin/);
- await input.fill('clear'); await input.press('Enter'); assert.equal(await page.locator('#transcript').textContent(), ''); await page.close();
+ assert.equal(await page.locator('#terminal-output').textContent(), 'arvin');
+ await input.fill('clear'); await input.press('Enter'); assert.equal(await page.locator('#terminal-output').textContent(), ''); await page.close();
 });
 
 test('Tab completes an unambiguous directory in the focused command input', async () => {

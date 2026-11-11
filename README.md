@@ -1,6 +1,6 @@
 # portofolio-web
 
-Arvinanto Bahtiar's static portfolio. Astro generates the semantic, readable HTML; Vue hydrates only the simulated terminal, whose commands are local and never execute a shell or make requests. GSAP/ScrollTrigger adds optional scroll motion, respecting reduced-motion preferences. The introduction's transfer values are explicitly fictional; it plays on each load and can be skipped.
+Arvinanto Bahtiar's static portfolio. Astro generates semantic, readable HTML; Vue hydrates the local terminal and manual project slider. Terminal commands never execute a shell or make requests. GSAP/ScrollTrigger adds optional scroll motion, respecting reduced-motion preferences. The introduction's transfer values are fictional; it plays on each load and can be skipped.
 
 ## Development
 
@@ -15,8 +15,8 @@ bun run build
 bun run check:deploy  # credential-free dry run, not a deployment
 ```
 
-- `src/pages/` is the Astro page; `src/components/` contains the shared section and Vue terminal.
-- `src/content.ts` holds editable writing, project, experience and achievement records. Verify changes against `docs/content-sources.md`; drafts are explicitly labeled and external writing links stay on Medium.
+- `src/pages/` contains the home page and generated writing detail routes; `src/components/` contains the shared section and Vue islands.
+- `src/content.ts` holds editable writing, project, experience and achievement records. The three sample drafts use typed `title`, `slug`, `excerpt`, `cover`, `publishedAt` and `body` fields; editing a record and rebuilding generates its `/writing/<slug>/` page. Use a unique URL-safe slug; leave dates null until genuinely published. Draft labels are currently rendered unconditionally. Medium remains a separate contact link, not a content source or integration. Verify career records against `docs/content-sources.md`.
 - `src/shell.ts` is the DOM-independent simulated command parser; `src/motion.ts` owns scroll motion; `src/style.css` contains design tokens and styles. JetBrains Mono and Silkscreen Bold 700 are self-hosted under `public/fonts/` with their licenses; the former SVG title is retired.
 
 ## Deployment

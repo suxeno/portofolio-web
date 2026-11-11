@@ -23,26 +23,19 @@ onUnmounted(() => { document.removeEventListener('selectionchange', updateCaret)
 
 const cwd = ref('/home/arvin');
 const command = ref('');
-const output = ref<Result>({ cwd: cwd.value, output: 'Type help or choose a directory.' });
-const transcript = ref<string[]>([]);
+const output = ref<Result>({ cwd: cwd.value, output: '' });
+
 const history: string[] = [];
 let historyIndex = 0;
 const prompt = computed(() => `arvin@portfolio:${cwd.value.replace('/home/arvin', '~')}$`);
-function listingText(result: Result): string {
-  const listing = result.listing;
-  if (!listing) return result.output;
-  return `${listing.all ? './  ../  ' : ''}${listing.names.map(name => `${listing.long ? 'dr-x ' : ''}${name}/  `).join('')}${listing.long ? '-r-- ' : ''}README.md`;
-}
 function submit() {
   const value = command.value;
-  const priorPrompt = prompt.value;
   if (value.trim()) history.push(value);
   historyIndex = history.length;
   const result = runCommand(cwd.value, value);
   cwd.value = result.cwd;
   output.value = result;
-  if (result.clear) transcript.value = [];
-  else if (value.trim()) transcript.value.push(`${priorPrompt} ${value}\n${listingText(result)}`);
+
   if (result.navigate) {
     window.location.hash = result.navigate;
     document.getElementById(`${result.navigate}-title`)?.focus({ preventScroll: true });
@@ -66,7 +59,8 @@ function onKey(event: KeyboardEvent) {
 }
 </script>
 <template>
-  <div id="transcript" aria-label="Command transcript"><p v-for="(line, index) in transcript" :key="index">{{ line }}</p></div>
-  <form id="command-form" @submit.prevent="submit"><label for="command">Command</label><div class="command-line"><span class="command-prompt" aria-hidden="true">{{ prompt }}</span><span class="command-input-wrap"><input ref="commandInput" id="command" v-model="command" name="command" maxlength="80" autocomplete="off" spellcheck="false" placeholder="type help" :class="{ composing }" @keydown="onKey" @keyup="updateCaret" @input="updateCaret" @focus="updateCaret" @blur="updateCaret" @click="updateCaret" @scroll="updateCaret" @compositionstart="compositionStart" @compositionend="compositionEnd" /><span ref="measure" class="command-measure" aria-hidden="true"></span><span v-show="showCaret" class="command-caret" :style="{ left: `${caretX}px` }" aria-hidden="true"></span></span><button type="submit">Run</button></div></form>
+
   <p id="terminal-output" class="terminal-output" role="status" aria-live="polite"><template v-if="output.listing"><template v-if="output.listing.all">./  ../  </template><template v-for="name in output.listing.names" :key="name">{{ output.listing.long ? 'dr-x ' : '' }}<a :href="`#${name}`">{{ name }}/</a>  </template>{{ output.listing.long ? '-r-- ' : '' }}<a href="#readme">README.md</a></template><template v-else>{{ output.output }}</template></p>
+  <form id="command-form" @submit.prevent="submit"><label for="command" class="sr-only">Command</label><div class="command-line"><span class="command-prompt" aria-hidden="true">{{ prompt }}</span><span class="command-input-wrap"><input ref="commandInput" id="command" v-model="command" name="command" maxlength="80" autocomplete="off" spellcheck="false" placeholder="type help" :class="{ composing }" @keydown="onKey" @keyup="updateCaret" @input="updateCaret" @focus="updateCaret" @blur="updateCaret" @click="updateCaret" @scroll="updateCaret" @compositionstart="compositionStart" @compositionend="compositionEnd" /><span ref="measure" class="command-measure" aria-hidden="true"></span><span v-show="showCaret" class="command-caret" :style="{ left: `${caretX}px` }" aria-hidden="true"></span></span><button type="submit">Run</button></div></form>
+  <p class="command-hint">Type help for commands.</p>
 </template>
