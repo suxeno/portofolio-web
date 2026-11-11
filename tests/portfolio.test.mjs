@@ -5,6 +5,97 @@ import { chromium } from 'playwright-core';
 import { existsSync } from 'node:fs';
 import { createServer } from 'node:net';
 
+test('compact header opens accessible drawer and restores focus on Escape', async () => {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
+  try {
+    await page.goto(url);
+    const trigger = page.getByRole('button', { name: 'Open menu' });
+    assert.equal(await trigger.getAttribute('aria-expanded'), 'false');
+    assert.equal(await page.locator('.site-header nav').isVisible(), false);
+    await trigger.click();
+    assert.equal(await trigger.getAttribute('aria-expanded'), 'true');
+    assert.equal(await page.getByRole('dialog').isVisible(), true);
+    await page.keyboard.press('Escape');
+    assert.equal(await trigger.getAttribute('aria-expanded'), 'false');
+    assert.equal(await trigger.evaluate(el => el === document.activeElement), true);
+  } finally { await page.close(); }
+});
+
+test('drawer closes by button, backdrop, resize and history restore without scroll lock', async () => {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
+  try {
+    await page.goto(url); await page.evaluate(() => scrollTo(0, 400));
+    const trigger = page.getByRole('button', { name: 'Open menu' });
+    const open = async () => { await trigger.click(); assert.equal(await page.evaluate(() => document.documentElement.style.overflow), 'hidden'); };
+    const closed = async () => { await page.waitForFunction(() => document.querySelector('.menu-trigger').getAttribute('aria-expanded') === 'false'); assert.equal(await page.evaluate(() => document.documentElement.style.overflow), ''); };
+    await open(); await page.getByRole('button', { name: 'Close menu' }).click(); await closed();
+    assert.equal(await trigger.evaluate(el => el === document.activeElement), true);
+    await open(); await page.mouse.click(5, 300); await closed();
+    await open(); await page.setViewportSize({ width: 1280, height: 844 }); await closed();
+    assert.equal(await page.locator('.site-header nav').isVisible(), true);
+    await page.setViewportSize({ width: 390, height: 844 }); await open();
+    await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }))); await closed();
+  } finally { await page.close(); }
+});
+
+test('browser Back while drawer is open closes it and restores scrolling', async () => {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
+  try {
+    await page.goto(url);
+    await page.evaluate(() => history.pushState(null, '', '#projects'));
+    const trigger = page.getByRole('button', { name: 'Open menu' });
+    await trigger.click();
+    assert.equal(await page.evaluate(() => document.documentElement.style.overflow), 'hidden');
+    await page.goBack();
+    await page.waitForFunction(() => document.querySelector('.menu-trigger').getAttribute('aria-expanded') === 'false');
+    assert.equal(await page.locator('dialog').isVisible(), false);
+    assert.equal(await page.evaluate(() => document.documentElement.style.overflow), '');
+    assert.equal(await page.evaluate(() => location.hash), '');
+  } finally { await page.close(); }
+});
+
+test('drawer confines keyboard focus and section link focuses heading', async () => {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
+  try {
+    await page.goto(url); await page.getByRole('button', { name: 'Open menu' }).click();
+    for (let i = 0; i < 12; i++) {
+      await page.keyboard.press('Tab');
+      assert.equal(await page.evaluate(() => document.activeElement === document.body || document.querySelector('dialog').contains(document.activeElement)), true);
+    }
+    await page.getByRole('navigation', { name: 'Mobile navigation' }).getByRole('link', { name: 'Projects' }).click();
+    assert.equal(await page.evaluate(() => location.hash), '#projects');
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'projects-title');
+    assert.equal(await page.locator('dialog').isVisible(), false);
+  } finally { await page.close(); }
+});
+
+test('compact and desktop geometry and no-JavaScript fallback', async () => {
+  for (const width of [320, 390, 899, 900, 1280, 1366, 1440]) {
+    const page = await browser.newPage({ viewport: { width, height: 844 }, reducedMotion: 'reduce' });
+    try {
+      const errors = []; page.on('pageerror', error => errors.push(error.message));
+      await page.goto(url);
+      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `overflow at ${width}`);
+      assert.equal(await page.locator('.site-header nav').isVisible(), width >= 900);
+      if (width < 900) {
+        const box = await page.getByRole('button', { name: 'Open menu' }).boundingBox();
+        assert.ok(box.width >= 44 && box.height >= 44);
+        const brand = await page.locator('.site-header .wordmark').boundingBox();
+        assert.ok(box.x >= brand.x + brand.width, `trigger must be right of brand at ${width}`);
+        assert.ok(Math.abs((box.y + box.height / 2) - (brand.y + brand.height / 2)) <= 1, `brand and trigger must share a vertical center at ${width}`);
+      }
+      assert.deepEqual(errors, []);
+    } finally { await page.close(); }
+  }
+  const page = await browser.newPage({ viewport: { width: 320, height: 844 }, javaScriptEnabled: false });
+  try {
+    await page.goto(url);
+    assert.equal(await page.locator('.site-header nav a').count(), 4);
+    assert.equal(await page.locator('.site-header nav a').first().isVisible(), true);
+    assert.equal(await page.locator('.menu-trigger').isVisible(), false);
+  } finally { await page.close(); }
+});
+
 async function trackMotion(page) {
   await page.addInitScript(() => {
     window.__motion = [];

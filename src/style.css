@@ -81,3 +81,13 @@ footer{flex-wrap:wrap;padding:24px 0}footer nav{display:flex;flex-wrap:wrap;gap:
 .project-slider .entry{display:block}.project-slider .entry p:last-child{max-width:none;text-align:left}
 @media(max-width:600px){.project-slider .entry{flex-basis:90%}}
 .article-page{padding:80px 0;min-height:80vh}.article-page article{margin-top:90px}.article-page h1{font-size:clamp(32px,6vw,70px);max-width:900px}.article-page p{max-width:70ch;line-height:1.8}.article-cover{min-height:240px;display:grid;place-items:center;background:#292929;color:#aaa;font-size:12px;margin:40px 0}
+
+/* Compact navigation is enhanced only when modal dialogs are available. */
+.menu-trigger{display:none} #mobile-menu:not([open]){display:none}
+#mobile-menu{position:fixed;inset:0 0 0 auto;margin:0;width:min(320px,85vw);max-width:none;max-height:none;height:100dvh;padding:20px;background:#171717;color:#f5f5f0;border:0;border-left:1px solid #777}
+#mobile-menu::backdrop{background:rgba(0,0,0,.65)}
+.menu-trigger,.menu-close{min-width:44px;min-height:44px;background:none;color:inherit;border:1px solid #777;cursor:pointer;font-size:24px}
+.menu-close{display:block;margin-left:auto}
+#mobile-menu ul{list-style:none;padding:0;margin:32px 0}#mobile-menu li{border-bottom:1px solid #555}#mobile-menu a{display:flex;align-items:center;min-height:54px;text-decoration:none}#mobile-menu a:hover{text-decoration:underline}
+@media(max-width:899px){.mobile-nav-ready .site-header{display:flex;flex-direction:row;align-items:center;padding:0;gap:24px}.mobile-nav-ready .site-header nav{display:none}.mobile-nav-ready .menu-trigger:not([hidden]){display:block}}
+@media(prefers-reduced-motion:no-preference){#mobile-menu[open]{animation:drawer-enter 160ms ease-out}@keyframes drawer-enter{from{opacity:0;transform:translateX(24px)}to{opacity:1;transform:translateX(0)}}}

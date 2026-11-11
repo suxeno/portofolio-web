@@ -1,44 +1,101 @@
 # portofolio-web
 
-Arvinanto Bahtiar's static portfolio. Astro generates semantic, readable HTML; Vue hydrates the local terminal and manual project slider. Terminal commands never execute a shell or make requests. GSAP/ScrollTrigger adds optional scroll motion, respecting reduced-motion preferences. The introduction's transfer values are fictional; it plays on landing-page loads and can be skipped.
+Static portfolio for Arvinanto Bahtiar. [Live site](https://portofolio.arvinantobahtiar.workers.dev)
 
-## Development
+## Technical specification
 
-Install the Bun version pinned by `packageManager` in `package.json`, Node.js 22.23.4 or newer, and Chromium/Chrome. Bun manages dependencies and runs scripts; Node remains necessary for Astro, Wrangler and the Node-based browser test runner. Set `CHROMIUM_PATH` if the browser is not in a standard Linux location. `bun.lock` is authoritative for exact dependency versions.
+- **Frontend:** Astro 7.4.7 static HTML; Vue 3.5.45 islands for terminal and project slider.
+- **Motion:** GSAP 3.15.1 + ScrollTrigger; Canvas 2D for one-bit artwork. No p5.js or Three.js.
+- **Language:** TypeScript 6.0.3; ESM.
+- **Toolchain:** Bun 1.4.4; Node.js ≥22.23.4; exact dependencies in `bun.lock`.
+- **Testing:** Node test runner + Playwright Core 1.65.0 + Chromium.
+- **Hosting:** Cloudflare Worker `portofolio`; Wrangler 4.158.0 serves `dist/` assets.
+- **Fonts:** self-hosted JetBrains Mono Regular and Silkscreen Bold 700; OFL licenses included.
+- **Backend:** none. Content is local data; terminal commands never execute a real shell.
 
-### Preview locally before committing
+## Repository map
 
-From a terminal on the computer containing this working tree:
-
-```sh
-cd /home/pi/projects/portofolio-web  # or cd to your local clone
-bun install --frozen-lockfile          # only needed initially or after dependencies change
-bun run dev
+```text
+.
+├── src/
+│   ├── pages/
+│   │   ├── index.astro              # Portfolio homepage
+│   │   └── writing/
+│   │       ├── index.astro          # Complete writing archive
+│   │       └── [slug].astro         # Generated article pages
+│   ├── components/
+│   │   ├── EditorialSection.astro   # Section heading and artwork shell
+│   │   ├── Terminal.vue            # Command input, output and keyboard handling
+│   │   └── ProjectSlider.vue       # Manual project carousel
+│   ├── content.ts                  # Writing, projects, roles and achievements
+│   ├── shell.ts                    # Safe local command/path parser
+│   ├── main.ts                     # Landing intro and navigation lifecycle
+│   ├── mobile-nav.ts               # Compact modal navigation lifecycle
+│   ├── motion.ts                   # GSAP section choreography
+│   ├── section-art.ts              # Canvas drawing, loops and motion controls
+│   ├── section-art.css             # Artwork and section compositions
+│   ├── style.css                   # Base styles, fonts and design tokens
+│   ├── writing-order.mjs           # Date ordering and three-entry preview selector
+│   └── writing-order.d.mts         # Selector TypeScript declarations
+├── public/fonts/                   # Font binaries and license files
+├── tests/
+│   ├── astro-migration.test.mjs     # Static rendering and island architecture
+│   ├── continuation.test.mjs        # Content and section regression checks
+│   ├── dither.test.mjs              # Artwork markup checks
+│   ├── placeholder.test.mjs         # Semantic HTML without client rendering
+│   ├── portfolio.test.mjs           # Browser layout, interactions and motion
+│   ├── shell.test.mjs               # Command parser unit tests
+│   ├── writing-revision.test.mjs    # Preview cap and archive generation fixtures
+│   └── capture.mjs                 # Local preview screenshot utility
+├── docs/
+│   ├── content-sources.md          # Factual content provenance
+│   ├── BRIEF.md                    # Original project brief
+│   └── HANDOFF-redesign.md         # Historical redesign handoff
+├── .github/workflows/ci-deploy.yml  # CI checks and main-branch deployment
+├── .impeccable/design.json         # Machine-readable design context
+├── README.md                      # Technical quick reference
+├── PRODUCT.md                     # Product scope and constraints
+├── DESIGN.md                      # Current visual system and behavior
+├── astro.config.mjs               # Static output and Vue integration
+├── tsconfig.json                  # Type-check configuration
+├── wrangler.jsonc                 # Worker target and asset directory
+├── package.json                   # Scripts and dependency versions
+├── bun.lock                       # Locked dependencies
+└── .gitignore                     # Generated files and secret exclusions
 ```
 
-Open the **Local** URL printed by Astro (usually `http://localhost:4321/`) in a browser on the same computer. The development server uses the current working-tree files, including uncommitted changes, and updates as you edit. If port 4321 is busy, use the URL Astro prints instead. Press `Ctrl+C` in the terminal to stop it. This does not commit, push, or deploy anything.
+Generated/local only: `dist/`, `.astro/`, `node_modules/`, `.screenshots/`, `.art-evidence/` (review captures; not part of the deployed app).
 
-To review the changes, reload the landing page and check that its intro ends after four seconds; open a writing and return to the landing page using both the return link and browser Back, checking that neither shows the intro; then check that project descriptions use the full card width with left-aligned text and that cards have some space between them. Reduced-motion settings skip the intro.
+## Run and verify
 
-To check the production build locally instead, run `bun run build` followed by `bunx astro preview`, then open the local URL it prints. Stop it with `Ctrl+C`. Neither command deploys the site.
-
-### Checks
+Requires the toolchain above and installed Chromium/Chrome. Set `CHROMIUM_PATH` if it is not at a standard test-runner location. No application secrets are required locally.
 
 ```sh
 bun install --frozen-lockfile
-bun run dev
-bun run typecheck
-bun run test          # builds, then tests the built site in Chromium
-bun run build
-bun run check:deploy  # credential-free dry run, not a deployment
+bun run dev            # Development server; open the printed local URL
+bun run typecheck      # Astro, Vue and TypeScript diagnostics
+bun run test           # Production build, unit tests and Chromium regressions
+bun run build          # Generate dist/
+bunx astro preview     # Serve the production build locally
+bun run check:deploy   # Packaging dry run; does NOT publish
 ```
 
-- `src/pages/` contains the home page and generated writing detail routes; `src/components/` contains the shared section and Vue islands.
-- `src/content.ts` holds editable writing, project, experience and achievement records. The three sample drafts use typed `title`, `slug`, `excerpt`, `cover`, `publishedAt` and `body` fields; editing a record and rebuilding generates its `/writing/<slug>/` page. Use a unique URL-safe slug; leave dates null until genuinely published. The homepage shows at most three recent entries, with dated records ordered newest first and undated records retaining source order; `/writing/` lists the complete archive. Undated entries retain their sample-draft labels. Medium remains a separate contact link, not a content source or integration. Verify career records against `docs/content-sources.md`.
-- `src/shell.ts` is the DOM-independent simulated command parser; `src/motion.ts` owns scroll motion; `src/style.css` contains design tokens and styles. JetBrains Mono and Silkscreen Bold 700 are self-hosted under `public/fonts/` with their licenses; the former SVG title is retired.
+## Content and behavior
+
+- Edit records in `src/content.ts`; rebuild to publish changes. No CMS or Medium feed integration.
+- Writing fields: `title`, `slug`, `excerpt`, `cover`, `publishedAt`, `body`. Use unique URL-safe slugs; leave unpublished dates `null`.
+- Routes: `/` → portfolio; `/writing/` → archive; `/writing/<slug>/` → article. Homepage shows at most three recent entries; dated entries sort newest first, undated drafts retain source order.
+- Intro: four seconds on landing loads/reloads; skippable. Articles, return navigation and reduced-motion mode skip it.
+- Compact headers use a modal navigation drawer when JavaScript is available; ordinary header links remain available without it.
+- Artwork: visible loops capped at eight updates/second; ARVIN button pauses/resumes. Reduced motion is static; offscreen/hidden artwork suspends.
+- Projects use manual controls, keyboard navigation and native touch scrolling. Sample writing and dummy project images remain explicitly labeled.
 
 ## Deployment
 
-Astro produces static `dist/` assets. Wrangler packages these directly for the existing `portofolio` Worker; no SSR adapter is needed. CI installs the pinned Bun with a frozen lockfile, checks types, builds and tests the resulting site, then runs a dry run. Pull requests do not deploy; a push or manual dispatch on `main` deploys the tested build with the existing repository secrets. Local dry runs never publish.
+- `main` push or manual workflow dispatch → frozen install → typecheck → tests/build → dry run → deploy tested assets.
+- Pull requests run checks only. CI requires repository secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`.
+- Local development, build, preview and dry-run commands do not deploy. Never commit credentials.
 
-Update this README whenever the active stack changes. `src/section-art.ts` and `src/section-art.css` provide lightweight Canvas 2D one-bit section artwork: visible animations repeat, the existing ARVIN control pauses/resumes them, reduced motion uses static artwork, and hidden/offscreen rendering suspends. Three.js and p5.js remain optional future engines; neither is installed.
+## Maintenance
+
+Before every user-approved push, reconcile this README with the actual files, scripts, stack and behavior. Replace stale details; keep explanations short. Put release history and review evidence elsewhere—not in an ever-growing README.
