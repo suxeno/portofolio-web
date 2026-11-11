@@ -34,11 +34,11 @@ bun run check:deploy  # credential-free dry run, not a deployment
 ```
 
 - `src/pages/` contains the home page and generated writing detail routes; `src/components/` contains the shared section and Vue islands.
-- `src/content.ts` holds editable writing, project, experience and achievement records. The three sample drafts use typed `title`, `slug`, `excerpt`, `cover`, `publishedAt` and `body` fields; editing a record and rebuilding generates its `/writing/<slug>/` page. Use a unique URL-safe slug; leave dates null until genuinely published. Draft labels are currently rendered unconditionally. Medium remains a separate contact link, not a content source or integration. Verify career records against `docs/content-sources.md`.
+- `src/content.ts` holds editable writing, project, experience and achievement records. The three sample drafts use typed `title`, `slug`, `excerpt`, `cover`, `publishedAt` and `body` fields; editing a record and rebuilding generates its `/writing/<slug>/` page. Use a unique URL-safe slug; leave dates null until genuinely published. The homepage shows at most three recent entries, with dated records ordered newest first and undated records retaining source order; `/writing/` lists the complete archive. Undated entries retain their sample-draft labels. Medium remains a separate contact link, not a content source or integration. Verify career records against `docs/content-sources.md`.
 - `src/shell.ts` is the DOM-independent simulated command parser; `src/motion.ts` owns scroll motion; `src/style.css` contains design tokens and styles. JetBrains Mono and Silkscreen Bold 700 are self-hosted under `public/fonts/` with their licenses; the former SVG title is retired.
 
 ## Deployment
 
 Astro produces static `dist/` assets. Wrangler packages these directly for the existing `portofolio` Worker; no SSR adapter is needed. CI installs the pinned Bun with a frozen lockfile, checks types, builds and tests the resulting site, then runs a dry run. Pull requests do not deploy; a push or manual dispatch on `main` deploys the tested build with the existing repository secrets. Local dry runs never publish.
 
-Update this README whenever the active stack changes. **Deferred effects:** Three.js and/or p5.js are future options for deliberately designed 3D/2D work; neither is installed or implemented.
+Update this README whenever the active stack changes. `src/section-art.ts` and `src/section-art.css` provide lightweight Canvas 2D one-bit section artwork: visible animations repeat, the existing ARVIN control pauses/resumes them, reduced motion uses static artwork, and hidden/offscreen rendering suspends. Three.js and p5.js remain optional future engines; neither is installed.

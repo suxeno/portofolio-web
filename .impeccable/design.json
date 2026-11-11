@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-11T05:38:00Z",
+  "title": "Design System: Arvin Profile",
+  "extensions": {
+    "motion": [{"name":"art-hover","value":"opacity 220ms ease","purpose":"Restrained section artwork hover and focus response; disabled under reduced motion."}],
+    "breakpoints": [{"name":"compact","value":"899px"},{"name":"art-mobile","value":"700px"}]
+  },
+  "components": [
+    {"name":"Contact action","kind":"button","description":"Direct email action.","html":"<a class=\"ds-contact\" href=\"mailto:arvinantobahtiar@gmail.com\">Contact me ↗</a>","css":".ds-contact{display:inline-block;background:#f5f5f0;color:#171717;padding:14px 20px;text-decoration:none;font:16px monospace}.ds-contact:hover{background:#c5c5c0}.ds-contact:focus-visible{outline:2px solid currentColor;outline-offset:3px}"},
+    {"name":"Slider control","kind":"button","description":"Manual project navigation.","html":"<button class=\"ds-slider\" aria-label=\"Next project\">→</button>","css":".ds-slider{background:transparent;border:1px solid #777;color:#f5f5f0;min-width:44px;min-height:44px;cursor:pointer}.ds-slider:focus-visible{outline:2px solid currentColor;outline-offset:3px}"}
+  ],
+  "narrative": {"northStar":"The Editorial Terminal","overview":"An intentionally restrained, text-led portfolio draws on computer interfaces without requiring a visitor to use one.","keyCharacteristics":["Monochrome palette and flat surfaces.","Normal page navigation alongside an optional working terminal.","Three recent writing previews and a native archive.","Original one-bit two-hand trophy lift with paper confetti and other bounded artwork.","Connected experience timeline and achievement rules confined to the list column.","Question-led contact and direct email action."]}
+}

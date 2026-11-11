@@ -79,12 +79,4 @@ function startIntro(): void {
   document.addEventListener('click', onAnchor);
   timer = window.setTimeout(dismiss, 4000);
 }
-const motionToggle = document.querySelector<HTMLButtonElement>('.motion-toggle');
-if (motionToggle) {
-  motionToggle.addEventListener('click', () => {
-    const paused = document.body.classList.toggle('title-paused');
-    motionToggle.setAttribute('aria-label', paused ? 'Resume title animation' : 'Pause title animation');
-    motionToggle.setAttribute('aria-pressed', String(paused));
-  });
-}
 startIntro();

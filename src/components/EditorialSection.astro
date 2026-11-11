@@ -1,8 +1,8 @@
 ---
-interface Props { id: string; label: string; lead: string; emphasis: string }
-const { id, label, lead, emphasis } = Astro.props;
+interface Props { id: string; lead: string; emphasis: string }
+const { id, lead, emphasis } = Astro.props;
 ---
 <section class="editorial wrap" id={id} aria-labelledby={`${id}-title`}>
-  <div class="section-label">{label}</div>
+  <div class="art-column"><canvas class="section-art" data-dither={id} aria-hidden="true" width={id === 'writing' || id === 'achievements' ? 192 : 96} height={id === 'writing' || id === 'achievements' ? 192 : 72}></canvas></div>
   <div><h2 id={`${id}-title`} tabindex="-1">{lead} <em>{emphasis}</em></h2><slot /></div>
 </section>

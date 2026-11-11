@@ -44,9 +44,144 @@ after(async () => {
     try { process.kill(-server.pid, 'SIGTERM'); } catch (error) { if (error.code !== 'ESRCH') throw error; }
   }
 });
+test('dither renders distinct binary studies after a cached-page restore', async () => {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
+  await page.goto(url);
+  await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pagehide', { persisted: true })));
+  await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true })));
+  const signatures = [];
+  for (const id of ['writing', 'projects', 'experience', 'achievements', 'contact']) {
+    const canvas = page.locator(`[data-dither="${id}"]`);
+    await canvas.scrollIntoViewIfNeeded();
+    await page.waitForTimeout(200);
+    const pixels = await canvas.evaluate(c => [...c.getContext('2d').getImageData(0,0,c.width,c.height).data]);
+    const alpha = pixels.filter((_, i) => i % 4 === 3);
+    assert.ok(alpha.some(a => a === 255), `${id} contains ink`);
+    assert.ok(alpha.every(a => a === 0 || a === 255), `${id} is one-bit`);
+    signatures.push(alpha.join(','));
+  }
+  assert.equal(new Set(signatures).size, 5);
+  await page.close();
+});
+test('visible dither continues changing pixels beyond four seconds', async () => {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  try {
+    await page.goto(url); await page.keyboard.press('Escape');
+    const canvas = page.locator('[data-dither="projects"]');
+    await canvas.scrollIntoViewIfNeeded(); await page.waitForTimeout(4500);
+    const frames = new Set();
+    for (let i = 0; i < 8; i++) {
+      frames.add(await canvas.evaluate(c => c.toDataURL()));
+      await page.waitForTimeout(230);
+    }
+    assert.ok(frames.size > 1, `expected repeating motion, got ${frames.size} pixel frames`);
+  } finally { await page.close(); }
+});
+test('art pause freezes pixels and resume restores motion', async () => {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  try {
+    await page.goto(url); await page.keyboard.press('Escape');
+    const canvas = page.locator('[data-dither="projects"]');
+    await canvas.scrollIntoViewIfNeeded();
+    const toggle = page.getByRole('button', { name: 'Pause animations' });
+    await toggle.click(); await canvas.scrollIntoViewIfNeeded(); await page.waitForTimeout(200);
+    const frozen = await canvas.evaluate(c => c.toDataURL());
+    await page.waitForTimeout(900); assert.equal(await canvas.evaluate(c => c.toDataURL()), frozen);
+    await page.getByRole('button', { name: 'Resume animations' }).click();
+    await canvas.scrollIntoViewIfNeeded();
+    const frames = new Set();
+    for (let i = 0; i < 8; i++) { frames.add(await canvas.evaluate(c => c.toDataURL())); await page.waitForTimeout(230); }
+    assert.ok(frames.size > 1);
+  } finally { await page.close(); }
+});
+test('reduced motion renders the same static pixels when a previously animated section reenters', async () => {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  try {
+    await page.goto(url); await page.keyboard.press('Escape');
+    const canvas = page.locator('[data-dither="projects"]');
+    await page.emulateMedia({ reducedMotion: 'reduce' }); await canvas.scrollIntoViewIfNeeded(); await page.waitForTimeout(300);
+    const staticPixels = await canvas.evaluate(c => c.toDataURL());
+    await page.emulateMedia({ reducedMotion: 'no-preference' }); await page.waitForTimeout(650);
+    await page.locator('#contact-title').scrollIntoViewIfNeeded(); await page.waitForTimeout(300);
+    await page.emulateMedia({ reducedMotion: 'reduce' }); await canvas.scrollIntoViewIfNeeded(); await page.waitForTimeout(300);
+    assert.equal(await canvas.evaluate(c => c.toDataURL()), staticPixels);
+  } finally { await page.close(); }
+});
+test('hidden document suspends artwork and resumes it when shown', async () => {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  try {
+    await page.goto(url); await page.keyboard.press('Escape');
+    const canvas = page.locator('[data-dither="projects"]'); await canvas.scrollIntoViewIfNeeded(); await page.waitForTimeout(300);
+    await page.evaluate(() => { Object.defineProperty(document, 'hidden', { configurable: true, value: true }); document.dispatchEvent(new Event('visibilitychange')); });
+    const frozen = await canvas.evaluate(c => c.toDataURL()); await page.waitForTimeout(900);
+    assert.equal(await canvas.evaluate(c => c.toDataURL()), frozen);
+    await page.evaluate(() => { Object.defineProperty(document, 'hidden', { configurable: true, value: false }); document.dispatchEvent(new Event('visibilitychange')); });
+    const frames = new Set(); for (let i = 0; i < 8; i++) { frames.add(await canvas.evaluate(c => c.toDataURL())); await page.waitForTimeout(230); }
+    assert.ok(frames.size > 1);
+  } finally { await page.close(); }
+});
+test('pagehide freezes pixels and persisted pageshow resumes without undoing pause', async () => {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  try {
+    await page.goto(url); await page.keyboard.press('Escape');
+    const canvas = page.locator('[data-dither="projects"]'); await canvas.scrollIntoViewIfNeeded(); await page.waitForTimeout(300);
+    await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pagehide', { persisted: true })));
+    const frozen = await canvas.evaluate(c => c.toDataURL()); await page.waitForTimeout(700); assert.equal(await canvas.evaluate(c => c.toDataURL()), frozen);
+    await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true })));
+    const frames = new Set(); for (let i = 0; i < 8; i++) { frames.add(await canvas.evaluate(c => c.toDataURL())); await page.waitForTimeout(230); } assert.ok(frames.size > 1);
+    await page.getByRole('button', { name: 'Pause animations' }).click();
+    await page.evaluate(() => { window.dispatchEvent(new PageTransitionEvent('pagehide', { persisted: true })); window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true })); });
+    assert.equal(await page.getByRole('button', { name: 'Resume animations' }).getAttribute('aria-pressed'), 'true');
+    await canvas.scrollIntoViewIfNeeded(); await page.waitForTimeout(300);
+    const paused = await canvas.evaluate(c => c.toDataURL()); await page.waitForTimeout(700); assert.equal(await canvas.evaluate(c => c.toDataURL()), paused);
+  } finally { await page.close(); }
+});
+test('offscreen artwork stops changing while another section animates', async () => {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  try {
+    await page.goto(url); await page.keyboard.press('Escape');
+    const first = page.locator('[data-dither="projects"]'); await first.scrollIntoViewIfNeeded(); await page.waitForTimeout(400);
+    const second = page.locator('[data-dither="contact"]'); await second.scrollIntoViewIfNeeded(); await page.waitForTimeout(400);
+    const frozen = await first.evaluate(c => c.toDataURL());
+    const frames = new Set(); for (let i = 0; i < 8; i++) { frames.add(await second.evaluate(c => c.toDataURL())); await page.waitForTimeout(230); }
+    assert.equal(await first.evaluate(c => c.toDataURL()), frozen); assert.ok(frames.size > 1);
+  } finally { await page.close(); }
+});
+test('art pause survives an article round trip', async () => {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  try {
+    await page.goto(url); await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: 'Pause animations' }).click();
+    await page.locator('#writing a').first().click(); await page.locator('a[href="/#writing"]').click();
+    assert.equal(await page.getByRole('button', { name: 'Resume animations' }).getAttribute('aria-pressed'), 'true');
+    const canvas = page.locator('[data-dither="writing"]'); await canvas.scrollIntoViewIfNeeded(); await page.waitForTimeout(300);
+    const frozen = await canvas.evaluate(c => c.toDataURL()); await page.waitForTimeout(700); assert.equal(await canvas.evaluate(c => c.toDataURL()), frozen);
+  } finally { await page.close(); }
+});
+test('art control reserves its footprint before JavaScript runs', async () => {
+  const page = await browser.newPage({ javaScriptEnabled: false, viewport: { width: 390, height: 844 } });
+  try {
+    await page.goto(url);
+    const button = page.locator('.art-toggle');
+    const metrics = await button.evaluate(el => ({width: el.getBoundingClientRect().width, height: el.getBoundingClientRect().height}));
+    assert.ok(metrics.width > 0 && metrics.height > 0, 'hidden control must reserve its eventual footprint');
+  } finally { await page.close(); }
+});
+test('preference changes do not override an explicit artwork pause', async () => {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  try {
+    await page.goto(url); await page.keyboard.press('Escape');
+    const canvas = page.locator('[data-dither="projects"]'); await canvas.scrollIntoViewIfNeeded(); await page.waitForTimeout(300);
+    await page.getByRole('button', { name: 'Pause animations' }).click(); await canvas.scrollIntoViewIfNeeded(); await page.waitForTimeout(250);
+    const frozen = await canvas.evaluate(c => c.toDataURL());
+    await page.emulateMedia({ reducedMotion: 'reduce' }); await page.emulateMedia({ reducedMotion: 'no-preference' }); await page.waitForTimeout(800);
+    assert.equal(await canvas.evaluate(c => c.toDataURL()), frozen);
+    assert.equal(await page.getByRole('button', { name: 'Resume animations' }).getAttribute('aria-pressed'), 'true');
+  } finally { await page.close(); }
+});
 test('three sample writings lead to native article pages with a return link', async () => {
   const page = await browser.newPage({ javaScriptEnabled: false }); await page.goto(url);
-  const links = page.locator('#writing a[href^="/writing/"]');
+  const links = page.locator('#writing .entry a[href^="/writing/"]');
   assert.equal(await links.count(), 3);
   assert.equal(await page.locator('#writing a[href*="medium.com"]').count(), 0);
   for (let i=0;i<3;i++) {
@@ -78,13 +213,29 @@ test('career section keeps four approved roles and contact includes email', asyn
  await page.close();
 });
 
-test('section headings and full-width divider edges match the content area', async () => {
+test('headings, terminal divider and achievement art separation', async () => {
  for (const width of [1440,1366,1280,390,320]) {
   const page=await browser.newPage({viewport:{width,height:900},reducedMotion:'reduce'}); await page.goto(url);
-  for (const [id,title] of [['writing','Writings'],['projects','Projects'],['experience','Experience'],['achievements','Achievements'],['contact','Contact']]) assert.equal((await page.locator(`#${id}-title`).innerText()).trim(),title);
-  const edges=await page.evaluate(()=>({right:document.querySelector('#top').getBoundingClientRect().right,terminal:document.querySelector('.command-line').getBoundingClientRect().right,awards:[...document.querySelectorAll('#achievements .entry')].map(e=>e.getBoundingClientRect().right)}));
-  assert.equal(edges.terminal,edges.right,`terminal ${width}`); assert.equal(edges.awards.length,4); for(const edge of edges.awards) assert.equal(edge,edges.right,`achievement ${width}`);
+  for (const [id,title] of [['writing','Writings'],['projects','Projects'],['experience','Experience'],['achievements','Achievements'],['contact','Building something with Data or AI?']]) assert.equal((await page.locator(`#${id}-title`).innerText()).trim(),title);
+  const edges=await page.evaluate(()=>({right:document.querySelector('#top').getBoundingClientRect().right,terminal:document.querySelector('.command-line').getBoundingClientRect().right,art:document.querySelector('#achievements canvas').getBoundingClientRect().toJSON(),awards:[...document.querySelectorAll('#achievements .entry')].map(e=>e.getBoundingClientRect().toJSON())}));
+  assert.equal(edges.terminal,edges.right,`terminal ${width}`); assert.equal(edges.awards.length,4);
+  for(const r of edges.awards) assert.ok(r.right <= edges.art.left || r.top >= edges.art.bottom || r.bottom <= edges.art.top, `achievement collision ${width}: ${JSON.stringify({r,art:edges.art})}`);
   await page.close();
+ }
+});
+
+test('mobile writing and achievement artwork leads its heading in normal flow', async () => {
+ for (const width of [320,390]) {
+  const page=await browser.newPage({viewport:{width,height:844},reducedMotion:'reduce'});
+  try {
+   await page.goto(url);
+   for (const id of ['writing','achievements']) {
+    const box=await page.locator(`#${id}`).evaluate(section=>({art:section.querySelector('canvas').getBoundingClientRect().toJSON(),heading:section.querySelector('h2').getBoundingClientRect().toJSON(),section:section.getBoundingClientRect().toJSON(),float:getComputedStyle(section.querySelector('.art-column')).float}));
+    assert.equal(box.float,'none',`${id} ${width} must not float`);
+    assert.ok(box.art.bottom<=box.heading.top,`${id} ${width} artwork must precede heading: ${JSON.stringify(box)}`);
+    assert.ok(Math.abs(box.art.left-box.heading.left)<1 && Math.abs(box.art.left-box.section.left)<1,`${id} ${width} left alignment: ${JSON.stringify(box)}`);
+   }
+  } finally { await page.close(); }
  }
 });
 
@@ -141,10 +292,10 @@ test('pixel title stays on one line on the smallest phone', async () => {
  assert.ok(metrics.height <= metrics.line + 1, JSON.stringify(metrics)); await page.close();
 });
 
-test('portfolio navigation keeps five directory links and readme accessible', async () => {
+test('portfolio navigation keeps five directory links without a dangling README', async () => {
  const page=await browser.newPage({javaScriptEnabled:false}); await page.goto(url);
  assert.equal(await page.locator('.terminal-list a').count(),5);
- assert.equal(await page.locator('a[href="#readme"]').count(),1);
+ assert.equal(await page.locator('a[href="#readme"], #readme').count(),0);
  assert.equal((await page.locator('.site-header nav').innerText()).replace(/\s+/g,' ').trim(),'Writings Projects Experience Contact ↗');
  await page.close();
 });
@@ -157,18 +308,42 @@ test('hero is borderless and exposes a single command prompt', async () => {
  await page.close();
 });
 
-test('writing index presents numbered draft rows with clear article links', async () => {
+test('writing index presents draft rows with clear article links', async () => {
  const page=await browser.newPage({javaScriptEnabled:false}); await page.goto(url);
  const rows=page.locator('#writing .entry'); assert.equal(await rows.count(),3);
- for(let i=0;i<3;i++){const row=rows.nth(i); assert.match(await row.innerText(),new RegExp(`0${i+1} / SAMPLE DRAFT`)); assert.match(await row.innerText(),/Read article ↗/); assert.equal(await row.locator('a[href^="/writing/"]').count(),1);}
+ for(let i=0;i<3;i++){const row=rows.nth(i); assert.match(await row.innerText(),/SAMPLE DRAFT/); assert.match(await row.innerText(),/Read article ↗/); assert.equal(await row.locator('a[href^="/writing/"]').count(),1);}
  await page.close();
 });
 
 test('contact email is the primary contact action at desktop', async () => {
  const page=await browser.newPage({viewport:{width:1440,height:900},reducedMotion:'reduce'}); await page.goto(url);
  const email=page.locator('#contact a[href^="mailto:"]');
- assert.ok(await email.evaluate(el=>parseFloat(getComputedStyle(el).fontSize))>=30);
+ assert.equal(await email.getAttribute('href'), 'mailto:arvinantobahtiar@gmail.com');
+ assert.match(await email.textContent(), /Contact me/);
+ assert.ok(await email.evaluate(el=>el.getBoundingClientRect().height)>=44);
  await page.close();
+});
+
+test('archive and shell README remain accessible without footer README', async () => {
+ const page=await browser.newPage({reducedMotion:'reduce'}); await page.goto(url);
+ assert.equal(await page.locator('#contact h2').innerText(),'Building something with Data or AI?');
+ assert.equal(await page.locator('footer').getByText('README.md').count(),0);
+ await page.locator('#writing a[href="/writing/"]').click();
+ assert.equal(await page.locator('.boot').count(),0);
+ assert.equal(await page.locator('.writing-archive a[href^="/writing/"]').count(),3);
+ for (const link of await page.locator('.writing-archive a').all()) assert.ok((await page.request.get(new URL(await link.getAttribute('href'),url).href)).ok());
+ await page.goto(url); await page.locator('#command').fill('ls'); await page.locator('#command').press('Enter');
+ const readme=page.getByRole('button',{name:'README.md'}); await readme.focus(); await page.keyboard.press('Enter');
+ assert.match(await page.locator('#terminal-output').innerText(),/Arvin — Data Engineering and ML\/AI Engineering/);
+ assert.ok(!page.url().includes('#readme')); await page.close();
+});
+
+test('achievement text fits on one line at desktop', async () => {
+ for (const width of [1280,1366,1440]) {
+  const page=await browser.newPage({viewport:{width,height:900},reducedMotion:'reduce'}); await page.goto(url); await page.evaluate(()=>document.fonts.ready);
+  for (const p of await page.locator('#achievements .entry p').all()) { const m=await p.evaluate(e=>({height:e.getBoundingClientRect().height,line:parseFloat(getComputedStyle(e).lineHeight),size:parseFloat(getComputedStyle(e).fontSize),scroll:e.scrollWidth,client:e.clientWidth})); assert.ok(m.height<=m.line+1 && m.size>=14 && m.scroll<=m.client,JSON.stringify({width,...m})); }
+  await page.close();
+ }
 });
 
 test('experience uses separate date, role and organization columns on desktop', async () => {
@@ -462,7 +637,7 @@ test('wordmark pixels animate and can be paused', async () => {
  const page=await browser.newPage(); await page.goto(url); await page.keyboard.press('Escape');
  const title=page.locator('#hero-title');
  assert.notEqual(await title.evaluate(el=>getComputedStyle(el,'::after').animationName), 'none');
- const toggle=page.getByRole('button',{name:'Pause title animation'}); assert.equal(await toggle.textContent(), 'Arvin');
+ const toggle=page.getByRole('button',{name:'Pause animations'}); assert.equal(await toggle.textContent(), 'Arvin');
  await toggle.focus(); await page.keyboard.press('Enter');
  assert.equal(await title.evaluate(el=>getComputedStyle(el,'::after').animationPlayState), 'paused');
  await page.keyboard.press('Space');

@@ -1,0 +1,7 @@
+---
+import '../../style.css';
+import { writing } from '../../content';
+import { orderedWriting } from '../../writing-order.mjs';
+---
+<!doctype html><html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>Writings — Arvin</title><link rel="icon" href="data:," /></head>
+<body><main class="wrap article-page"><p><a href="/#writing">← Back to portfolio</a></p><h1>Writings</h1><div class="writing-archive">{orderedWriting(writing).map(item => <p><a href={`/writing/${item.slug}/`}>{item.title} ↗</a><br /><small>{item.publishedAt ?? 'Sample draft'}</small></p>)}</div></main></body></html>

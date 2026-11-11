@@ -7,11 +7,12 @@ test('centralized section data appears in the built HTML', async () => {
   const page = await html();
   for (const text of ['On building reliable pipelines', 'Drowsiness detection camera', 'Eratani', 'DINAMIKA']) assert.ok(page.includes(text));
 });
-test('contact follows the fourth section with index 05', async () => {
-  assert.match(await html(), /05 \/ CONTACT/);
-});
-test('README directory entry has a real readable no-script target', async () => {
+test('contact follows achievements without redundant section labels', async () => {
   const page = await html();
-  assert.match(page, /href="#readme"[^>]*>README\.md/);
-  assert.match(page, /id="readme"/);
+  assert.ok(page.indexOf('id="achievements"') < page.indexOf('id="contact"'));
+  assert.doesNotMatch(page, /05 \/ CONTACT/);
+});
+test('footer no longer contains the retired README target', async () => {
+  const page = await html();
+  assert.doesNotMatch(page, /href="#readme"|id="readme"/);
 });

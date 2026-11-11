@@ -1,9 +1,11 @@
 ---
 import "../style.css";
+import "../section-art.css";
 import Terminal from "../components/Terminal.vue";
 import ProjectSlider from "../components/ProjectSlider.vue";
 import EditorialSection from "../components/EditorialSection.astro";
 import { writing, projects, experience, achievements } from "../content";
+import { latestWriting } from "../writing-order.mjs";
 ---
 <!doctype html>
 <html lang="en">
@@ -23,8 +25,7 @@ import { writing, projects, experience, achievements } from "../content";
   <main id="main">
     <section class="hero wrap" id="top" aria-labelledby="hero-title">
       <div class="terminal">
-        <div class="meta">PORTFOLIO / DATA &amp; INTELLIGENCE</div>
-        <h1 id="hero-title"><button class="motion-toggle" type="button" aria-label="Pause title animation" aria-pressed="false">Arvin</button></h1>
+        <h1 id="hero-title"><button class="motion-toggle art-toggle" type="button" aria-label="Pause animations" aria-pressed="false">Arvin</button></h1>
         <p class="role">Data Engineering | ML/AI Engineering</p>
         <p class="intro">Building reliable data pipelines and scalable data solutions for analytics and AI-powered applications.</p>
 
@@ -33,24 +34,25 @@ import { writing, projects, experience, achievements } from "../content";
         <noscript><p>Command input requires JavaScript. Directory links remain available.</p></noscript>
       </div>
     </section>
-    <div class="section-rule wrap"><span>PROFILE / SELECTED INFORMATION</span><span>SCROLL TO EXPLORE ↓</span></div>
-    <EditorialSection id="writing" label="01 / NOTES" lead="" emphasis="Writings">
-      {writing.map((item, index) => <div class="entry"><a class="writing-link" href={`/writing/${item.slug}/`}><span>0{index + 1} / SAMPLE DRAFT</span><strong>{item.title}</strong><span>Read article ↗</span></a></div>)}
+
+    <EditorialSection id="writing" lead="" emphasis="Writings">
+      {latestWriting(writing).map((item, index) => <div class="entry"><a class="writing-link" href={`/writing/${item.slug}/`}><span>{item.publishedAt ?? 'SAMPLE DRAFT'}</span><strong>{item.title}</strong><span>Read article ↗</span></a></div>)}
+      <p class="writing-more"><a href="/writing/">See all writings ↗</a></p>
 
     </EditorialSection>
-    <EditorialSection id="projects" label="02 / SELECTED WORK" lead="" emphasis="Projects">
+    <EditorialSection id="projects" lead="" emphasis="Projects">
       <ProjectSlider client:load items={projects.map(item => item)} />
     </EditorialSection>
-    <EditorialSection id="experience" label="03 / CAREER" lead="" emphasis="Experience">
+    <EditorialSection id="experience" lead="" emphasis="Experience">
       {experience.map(item => <div class="entry"><div class="entry-date">{item.date}</div><h3>{item.title}</h3><p>{item.organization}</p></div>)}
     </EditorialSection>
-    <EditorialSection id="achievements" label="04 / RECOGNITION" lead="" emphasis="Achievements">
+    <EditorialSection id="achievements" lead="" emphasis="Achievements">
       {achievements.map(item => <div class="entry"><p>{item}</p></div>)}
     </EditorialSection>
-    <section class="contact-section" id="contact" aria-labelledby="contact-title"><div class="wrap contact-inner"><div class="section-label">05 / CONTACT</div><div><h2 id="contact-title" tabindex="-1">Contact</h2><p>Find me on LinkedIn or explore my work on GitHub.</p><div class="contact-links"><a href="mailto:arvinantobahtiar@gmail.com">arvinantobahtiar@gmail.com</a><a href="https://www.linkedin.com/in/arvinanto/">LinkedIn <span aria-hidden="true">↗</span></a><a href="https://github.com/suxeno">GitHub <span aria-hidden="true">↗</span></a><a href="https://medium.com/@arvinantobahtiar">Medium <span aria-hidden="true">↗</span></a></div></div></div>
+    <section class="contact-section" id="contact" aria-labelledby="contact-title"><div class="wrap contact-inner"><div class="contact-art"><canvas class="section-art" data-dither="contact" aria-hidden="true" width="96" height="72"></canvas></div><div><h2 id="contact-title" class="contact-invitation" tabindex="-1">Building something with Data or AI?</h2><div class="contact-links"><a href="mailto:arvinantobahtiar@gmail.com">Contact me ↗</a><a href="https://www.linkedin.com/in/arvinanto/">LinkedIn <span aria-hidden="true">↗</span></a><a href="https://github.com/suxeno">GitHub <span aria-hidden="true">↗</span></a><a href="https://medium.com/@arvinantobahtiar">Medium <span aria-hidden="true">↗</span></a></div></div></div>
     </section>
   </main>
-  <footer class="wrap"><span>ARVIN / PROFILE</span><nav aria-label="Footer navigation"><a href="#writing">Writing</a><a href="#projects">Projects</a><a href="#experience">Experience</a><a href="#achievements">Achievements</a><a href="#contact">Contact</a><a href="#readme">README.md</a></nav><p id="readme">README.md — Arvin works across Data Engineering and ML/AI Engineering.</p><a href="#top">Back to top ↑</a></footer>
-<script>import "../main";</script>
+  <footer class="wrap"><span>ARVIN / PROFILE</span><nav aria-label="Footer navigation"><a href="#writing">Writings</a><a href="#projects">Projects</a><a href="#experience">Experience</a><a href="#achievements">Achievements</a><a href="#contact">Contact</a></nav><a href="#top">Back to top ↑</a></footer>
+<script>import "../main"; import "../section-art";</script>
 </body>
 </html>
