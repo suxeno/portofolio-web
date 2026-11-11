@@ -7,5 +7,5 @@ export function getStaticPaths() {
 const { item } = Astro.props;
 ---
 <!doctype html>
-<html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>{item.title} — Arvin</title></head>
+<html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>{item.title} — Arvin</title><link rel="icon" href="data:," /></head>
 <body><main class="wrap article-page"><p><a href="/#writing">← Back to writings</a></p><article><p>Sample draft</p><h1>{item.title}</h1><p>{item.excerpt}</p><div class="article-cover">DUMMY COVER IMAGE</div>{item.body.map(paragraph => <p>{paragraph}</p>)}</article></main><script>import '../../main';</script></body></html>

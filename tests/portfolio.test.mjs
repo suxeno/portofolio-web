@@ -52,6 +52,7 @@ test('three sample writings lead to native article pages with a return link', as
   for (let i=0;i<3;i++) {
     const href = await links.nth(i).getAttribute('href');
     await page.goto(url + href); assert.match(await page.locator('main').innerText(), /sample draft/i);
+    assert.equal(await page.locator('head link[rel="icon"][href="data:,"]').count(), 1, 'Article must use the same favicon policy as home, avoiding a missing favicon.ico request');
     assert.equal(await page.locator('a[href="/#writing"]').count(), 1);
     assert.match(await page.locator('main').innerText(), /DUMMY COVER IMAGE/);
     await page.goto(url);
