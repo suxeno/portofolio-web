@@ -13,8 +13,8 @@ export const projects: LinkedRecord[] = [
 ];
 export const experience: Job[] = [
   { date: 'JUL 2026 — PRESENT', title: 'Data Engineer', organization: 'StickEarn' },
-  { date: 'JUL — SEP 2025', title: 'Data Engineer', organization: 'Eratani' },
-  { date: 'SEP — DEC 2024', title: 'Business Intelligence', organization: 'StickEarn' },
+  { date: 'JUL — SEP 2025', title: 'Data Engineer Intern', organization: 'Eratani' },
+  { date: 'SEP — DEC 2024', title: 'Business Intelligence Intern', organization: 'StickEarn' },
 
   { date: 'DEC 2023 — JUN 2024', title: 'Assistant Lecturer, Data Structure and Algorithm', organization: 'Telkom University' },
 

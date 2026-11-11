@@ -1,10 +1,28 @@
 # portofolio-web
 
-Arvinanto Bahtiar's static portfolio. Astro generates semantic, readable HTML; Vue hydrates the local terminal and manual project slider. Terminal commands never execute a shell or make requests. GSAP/ScrollTrigger adds optional scroll motion, respecting reduced-motion preferences. The introduction's transfer values are fictional; it plays on each load and can be skipped.
+Arvinanto Bahtiar's static portfolio. Astro generates semantic, readable HTML; Vue hydrates the local terminal and manual project slider. Terminal commands never execute a shell or make requests. GSAP/ScrollTrigger adds optional scroll motion, respecting reduced-motion preferences. The introduction's transfer values are fictional; it plays on landing-page loads and can be skipped.
 
 ## Development
 
 Install the Bun version pinned by `packageManager` in `package.json`, Node.js 22.23.4 or newer, and Chromium/Chrome. Bun manages dependencies and runs scripts; Node remains necessary for Astro, Wrangler and the Node-based browser test runner. Set `CHROMIUM_PATH` if the browser is not in a standard Linux location. `bun.lock` is authoritative for exact dependency versions.
+
+### Preview locally before committing
+
+From a terminal on the computer containing this working tree:
+
+```sh
+cd /home/pi/projects/portofolio-web  # or cd to your local clone
+bun install --frozen-lockfile          # only needed initially or after dependencies change
+bun run dev
+```
+
+Open the **Local** URL printed by Astro (usually `http://localhost:4321/`) in a browser on the same computer. The development server uses the current working-tree files, including uncommitted changes, and updates as you edit. If port 4321 is busy, use the URL Astro prints instead. Press `Ctrl+C` in the terminal to stop it. This does not commit, push, or deploy anything.
+
+To review the changes, reload the landing page and check that its intro ends after four seconds; open a writing and return to the landing page using both the return link and browser Back, checking that neither shows the intro; then check that project descriptions use the full card width with left-aligned text and that cards have some space between them. Reduced-motion settings skip the intro.
+
+To check the production build locally instead, run `bun run build` followed by `bunx astro preview`, then open the local URL it prints. Stop it with `Ctrl+C`. Neither command deploys the site.
+
+### Checks
 
 ```sh
 bun install --frozen-lockfile

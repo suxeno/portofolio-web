@@ -4,6 +4,14 @@ const sections = ['experience', 'projects', 'about', 'contact'] as const;
 
 function startIntro(): void {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const navigation = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+  if (navigation?.type === 'back_forward') return;
+  if (navigation?.type !== 'reload' && document.referrer) {
+    try {
+      const referrer = new URL(document.referrer);
+      if (referrer.origin === location.origin && referrer.pathname.startsWith('/writing/')) return;
+    } catch { /* Ignore an invalid referrer and show the intro. */ }
+  }
   const overlay = document.createElement('div');
   overlay.className = 'boot';
   overlay.setAttribute('aria-label', 'Profile introduction');
@@ -11,9 +19,9 @@ function startIntro(): void {
   document.body.append(overlay);
   let timer: number;
   let interval: number | undefined;
-  const dismiss = () => { clearTimeout(timer); clearInterval(interval); overlay.remove(); window.removeEventListener('keydown', onKey); document.removeEventListener('click', onAnchor); };
+  const dismiss = () => { clearTimeout(timer); clearInterval(interval); overlay.remove(); window.removeEventListener('keydown', onKey); window.removeEventListener('pagehide', dismiss); document.removeEventListener('click', onAnchor); };
   // Fictional package sizes are visual storytelling, never network telemetry.
-  const packageDuration = 800;
+  const packageDuration = 600;
   const downloadDuration = sections.length * packageDuration;
   const sizes = [48, 96, 24, 8];
   const totalSize = sizes.reduce((sum, size) => sum + size, 0);
@@ -31,7 +39,7 @@ function startIntro(): void {
   });
   const total = overlay.querySelector<HTMLElement>('.boot-total')!;
   total.classList.add('boot-package');
-  total.innerHTML = '<span class="boot-package-name">[4/4] Total</span><span class="boot-percent">100%</span><span class="boot-speed"></span><span class="boot-size"></span><span class="boot-time">00m03s</span>';
+  total.innerHTML = '<span class="boot-package-name">[4/4] Total</span><span class="boot-percent">100%</span><span class="boot-speed"></span><span class="boot-size"></span><span class="boot-time">00m02s</span>';
   total.querySelector('.boot-speed')!.textContent = `${(totalSize / (downloadDuration / 1000)).toFixed(1)} KiB/s`;
   total.querySelector('.boot-size')!.textContent = `${totalSize.toFixed(1)} KiB`;
   const transaction = overlay.querySelector<HTMLElement>('.boot-transaction')!;
@@ -55,8 +63,8 @@ function startIntro(): void {
       '[3/3] Loading arvin-profile      100%',
       'Complete!',
     ];
-    const transactionStart = downloadDuration + 300;
-    const count = elapsed < transactionStart ? 0 : Math.min(steps.length, Math.floor((elapsed - transactionStart) / 250) + 1);
+    const transactionStart = downloadDuration + 200;
+    const count = elapsed < transactionStart ? 0 : Math.min(steps.length, Math.floor((elapsed - transactionStart) / 200) + 1);
     transaction.textContent = steps.slice(0, count).join('\n');
     if (count === steps.length) clearInterval(interval);
   }
@@ -66,9 +74,10 @@ function startIntro(): void {
   const onAnchor = (event: MouseEvent) => { if (event.target instanceof Element && event.target.closest('a')) dismiss(); };
   overlay.querySelector('button')?.addEventListener('click', dismiss);
   window.addEventListener('keydown', onKey);
+  window.addEventListener('pagehide', dismiss);
 
   document.addEventListener('click', onAnchor);
-  timer = window.setTimeout(dismiss, 5000);
+  timer = window.setTimeout(dismiss, 4000);
 }
 const motionToggle = document.querySelector<HTMLButtonElement>('.motion-toggle');
 if (motionToggle) {

@@ -60,6 +60,15 @@ test('three sample writings lead to native article pages with a return link', as
   await page.close();
 });
 
+test('2024 and 2025 experience titles identify internships', async () => {
+ const page = await browser.newPage({javaScriptEnabled:false}); await page.goto(url);
+ const entries = page.locator('#experience .entry');
+ assert.equal(await entries.filter({hasText:'Eratani'}).locator('h3').innerText(), 'Data Engineer Intern');
+ assert.equal(await entries.filter({hasText:'SEP — DEC 2024'}).locator('h3').innerText(), 'Business Intelligence Intern');
+ assert.equal(await entries.filter({hasText:'JUL 2026 — PRESENT'}).locator('h3').innerText(), 'Data Engineer');
+ await page.close();
+});
+
 test('career section keeps four approved roles and contact includes email', async () => {
  const page=await browser.newPage({javaScriptEnabled:false}); await page.goto(url);
  const career=page.locator('#experience');
@@ -75,6 +84,17 @@ test('section headings and full-width divider edges match the content area', asy
   for (const [id,title] of [['writing','Writings'],['projects','Projects'],['experience','Experience'],['achievements','Achievements'],['contact','Contact']]) assert.equal((await page.locator(`#${id}-title`).innerText()).trim(),title);
   const edges=await page.evaluate(()=>({right:document.querySelector('#top').getBoundingClientRect().right,terminal:document.querySelector('.command-line').getBoundingClientRect().right,awards:[...document.querySelectorAll('#achievements .entry')].map(e=>e.getBoundingClientRect().right)}));
   assert.equal(edges.terminal,edges.right,`terminal ${width}`); assert.equal(edges.awards.length,4); for(const edge of edges.awards) assert.equal(edge,edges.right,`achievement ${width}`);
+  await page.close();
+ }
+});
+
+test('project descriptions use the full card width', async () => {
+ for (const width of [390, 1440]) {
+  const page = await browser.newPage({viewport:{width,height:900},reducedMotion:'reduce'}); await page.goto(url);
+  const sizes = await page.locator('.project-card').first().evaluate(card => ({card:card.getBoundingClientRect().width, text:card.querySelector('p').getBoundingClientRect().width}));
+  assert.ok(Math.abs(sizes.card - sizes.text) < 1, JSON.stringify({width,...sizes}));
+  assert.ok(['left', 'start'].includes(await page.locator('.project-card p').first().evaluate(el => getComputedStyle(el).textAlign)));
+  assert.ok(await page.locator('.project-slider').evaluate(el => parseFloat(getComputedStyle(el).columnGap)) > 24);
   await page.close();
  }
 });
@@ -158,11 +178,25 @@ test('experience uses separate date, role and organization columns on desktop', 
  assert.ok(positions[0]<positions[1] && positions[1]<positions[2],JSON.stringify(positions)); await page.close();
 });
 
-test('article full page reload preserves the live loading intro', async () => {
+test('native writing navigation and article reload never show the intro', async () => {
  const page=await browser.newPage(); await page.clock.install(); await page.clock.pauseAt(new Date(Date.now()+60000));
- await page.goto(url + '/writing/reliable-pipelines/',{waitUntil:'domcontentloaded'});
- assert.equal(await page.locator('.boot').count(),1); await page.clock.runFor(5100); assert.equal(await page.locator('.boot').count(),0);
- await page.reload({waitUntil:'domcontentloaded'}); assert.equal(await page.locator('.boot').count(),1); await page.keyboard.press('Escape'); await page.close();
+ await page.goto(url, {waitUntil:'domcontentloaded'}); await page.keyboard.press('Escape');
+ await page.locator('#writing a').first().click();
+ assert.match(page.url(), /\/writing\/reliable-pipelines\//);
+ assert.equal(await page.locator('.boot').count(),0);
+ await page.reload({waitUntil:'domcontentloaded'}); assert.equal(await page.locator('.boot').count(),0); await page.close();
+});
+
+test('returning from an article skips the intro, but a landing reload shows it', async () => {
+ const page = await browser.newPage();
+ await page.goto(url); await page.keyboard.press('Escape');
+ await page.locator('#writing a').first().click();
+ await page.locator('a[href="/#writing"]').click();
+ assert.equal(await page.locator('.boot').count(), 0, 'return link should not replay intro');
+ await page.reload(); assert.equal(await page.locator('.boot').count(), 1, 'intentional reload should replay intro');
+ await page.keyboard.press('Escape'); await page.locator('#writing a').first().click();
+ await page.goBack(); assert.equal(await page.locator('.boot').count(), 0, 'browser back should not replay intro');
+ await page.close();
 });
 
 test('career content and contact work without JavaScript', async () => {
@@ -173,7 +207,7 @@ test('career content and contact work without JavaScript', async () => {
   assert.equal(await page.locator('.boot').count(), 0);
   await page.close();
 });
-test('intro replays on every reload and lasts five seconds unless skipped', async () => {
+test('intro replays on every landing reload and lasts four seconds unless skipped', async () => {
   const context = await browser.newContext(); const page = await context.newPage();
   await page.clock.install(); await page.clock.pauseAt(new Date(Date.now() + 60_000));
   await page.goto(url, { waitUntil: 'domcontentloaded' }); await page.locator('.boot').waitFor({ state: 'attached', timeout: 5000 });
@@ -181,7 +215,7 @@ test('intro replays on every reload and lasts five seconds unless skipped', asyn
   await page.reload({ waitUntil: 'domcontentloaded' });
   assert.equal(await page.locator('.boot').count(), 1, 'reload replays even after Skip');
   await page.clock.runFor(2500); assert.equal(await page.locator('.boot').count(), 1, 'not dismissed at the old deadline');
-  await page.clock.runFor(2400); assert.equal(await page.locator('.boot').count(), 1);
+  await page.clock.runFor(1400); assert.equal(await page.locator('.boot').count(), 1);
   await page.clock.runFor(200); assert.equal(await page.locator('.boot').count(), 0);
   await page.reload({ waitUntil: 'domcontentloaded' });
   assert.equal(await page.locator('.boot').count(), 1, 'reload replays after natural completion too');
@@ -198,16 +232,16 @@ test('package intro updates terminal rows in place then completes its transactio
   const partial = await page.locator('[data-boot-package="experience"] .boot-percent').textContent();
   assert.notEqual(partial, '100%');
   assert.match(await page.locator('.boot-summary').textContent(), /KiB/);
-  await page.clock.runFor(2300);
+  await page.clock.runFor(1700);
   assert.notEqual(await page.locator('[data-boot-package="contact"] .boot-percent').textContent(), '100%', 'package animation is paced across the longer intro');
   assert.doesNotMatch(await page.locator('.boot-transaction').textContent(), /Complete!/);
-  await page.clock.runFor(1000);
+  await page.clock.runFor(700);
   assert.equal(await page.locator('[data-boot-package]').count(), 4, 'updates replace values, never duplicate log rows');
   for (const name of ['experience', 'projects', 'about', 'contact']) {
     assert.equal(await page.locator(`[data-boot-package="${name}"] .boot-percent`).textContent(), '100%');
     assert.match(await page.locator(`[data-boot-package="${name}"] .boot-size`).textContent(), /KiB/);
   }
-  await page.clock.runFor(1100);
+  await page.clock.runFor(900);
   assert.match(await page.locator('.boot-transaction').textContent(), /Complete!/);
   await page.setViewportSize({ width: 320, height: 640 });
   assert.equal(await page.evaluate(() => {
