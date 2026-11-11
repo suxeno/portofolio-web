@@ -16,6 +16,9 @@ test('compact header opens accessible drawer and restores focus on Escape', asyn
     assert.equal(await trigger.getAttribute('aria-expanded'), 'true');
     assert.equal(await page.getByRole('dialog').isVisible(), true);
     await page.keyboard.press('Escape');
+    // Native dialog close events are queued; wait for the observable cleanup, not an arbitrary delay.
+    await page.waitForFunction(() => document.querySelector('.menu-trigger').getAttribute('aria-expanded') === 'false');
+    assert.equal(await page.getByRole('dialog').isVisible(), false);
     assert.equal(await trigger.getAttribute('aria-expanded'), 'false');
     assert.equal(await trigger.evaluate(el => el === document.activeElement), true);
   } finally { await page.close(); }
