@@ -4,6 +4,8 @@ import "../section-art.css";
 import Terminal from "../components/Terminal.vue";
 import ProjectSlider from "../components/ProjectSlider.vue";
 import EditorialSection from "../components/EditorialSection.astro";
+import ToolsSection from "../components/ToolsSection.astro";
+import CertificatesSection from "../components/CertificatesSection.astro";
 import { writing, projects, experience, achievements } from "../content";
 import { latestWriting } from "../writing-order.mjs";
 ---
@@ -48,12 +50,14 @@ import { latestWriting } from "../writing-order.mjs";
     <EditorialSection id="projects" lead="" emphasis="Projects">
       <ProjectSlider client:load items={projects.map(item => item)} />
     </EditorialSection>
+    <ToolsSection />
     <EditorialSection id="experience" lead="" emphasis="Experience">
       {experience.map(item => <div class="entry"><div class="entry-date">{item.date}</div><h3>{item.title}</h3><p>{item.organization}</p></div>)}
     </EditorialSection>
     <EditorialSection id="achievements" lead="" emphasis="Achievements">
       {achievements.map(item => <div class="entry"><p>{item}</p></div>)}
     </EditorialSection>
+    <CertificatesSection />
     <section class="contact-section" id="contact" aria-labelledby="contact-title"><div class="wrap contact-inner"><div class="contact-art"><canvas class="section-art" data-dither="contact" aria-hidden="true" width="96" height="72"></canvas></div><div><h2 id="contact-title" class="contact-invitation" tabindex="-1">Building something with Data or AI?</h2><div class="contact-links"><a href="mailto:arvinantobahtiar@gmail.com">Contact me ↗</a><a href="https://www.linkedin.com/in/arvinanto/">LinkedIn <span aria-hidden="true">↗</span></a><a href="https://github.com/suxeno">GitHub <span aria-hidden="true">↗</span></a><a href="https://medium.com/@arvinantobahtiar">Medium <span aria-hidden="true">↗</span></a></div></div></div>
     </section>
   </main>

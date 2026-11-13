@@ -12,7 +12,7 @@ Inferred from the portfolio and brief: people assessing Arvinanto Bahtiar's data
 
 ## Product Purpose
 
-Present career history, selected projects, achievements, sample writing and ways to contact Arvinanto Bahtiar. Visitors can browse conventionally or explore using an optional terminal.
+Present career history, selected projects, tools, achievements, credentials, sample writing and ways to contact Arvinanto Bahtiar. Visitors can browse conventionally or explore using an optional terminal. Credential images remain awaiting source files in the current review draft.
 
 ## Operating Context
 

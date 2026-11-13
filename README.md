@@ -25,6 +25,8 @@ Static portfolio for Arvinanto Bahtiar. [Live site](https://portofolio.arvinanto
 │   │       └── [slug].astro         # Generated article pages
 │   ├── components/
 │   │   ├── EditorialSection.astro   # Section heading and artwork shell
+│   │   ├── ToolsSection.astro       # Three-row marquee and static logo list
+│   │   ├── CertificatesSection.astro # Uniform certificate frames and source links
 │   │   ├── Terminal.vue            # Command input, output and keyboard handling
 │   │   └── ProjectSlider.vue       # Manual project carousel
 │   ├── content.ts                  # Writing, projects, roles and achievements
@@ -38,6 +40,7 @@ Static portfolio for Arvinanto Bahtiar. [Live site](https://portofolio.arvinanto
 │   ├── writing-order.mjs           # Date ordering and three-entry preview selector
 │   └── writing-order.d.mts         # Selector TypeScript declarations
 ├── public/fonts/                   # Font binaries and license files
+├── public/logos/                   # Self-hosted monochrome tool logos
 ├── tests/
 │   ├── astro-migration.test.mjs     # Static rendering and island architecture
 │   ├── continuation.test.mjs        # Content and section regression checks
@@ -45,6 +48,8 @@ Static portfolio for Arvinanto Bahtiar. [Live site](https://portofolio.arvinanto
 │   ├── placeholder.test.mjs         # Semantic HTML without client rendering
 │   ├── portfolio.test.mjs           # Browser layout, interactions and motion
 │   ├── shell.test.mjs               # Command parser unit tests
+│   ├── tools-section.test.mjs       # Tool markup and motion fallback checks
+│   ├── certificates-section.test.mjs # Credential records and image-ready markup
 │   ├── writing-revision.test.mjs    # Preview cap and archive generation fixtures
 │   └── capture.mjs                 # Local preview screenshot utility
 ├── docs/
@@ -56,6 +61,8 @@ Static portfolio for Arvinanto Bahtiar. [Live site](https://portofolio.arvinanto
 ├── README.md                      # Technical quick reference
 ├── PRODUCT.md                     # Product scope and constraints
 ├── DESIGN.md                      # Current visual system and behavior
+├── TOOLS-PROVENANCE.md             # Logo sources, licensing and tool provenance
+├── CREDENTIALS-PROVENANCE.md        # Credential sources and missing-image status
 ├── astro.config.mjs               # Static output and Vue integration
 ├── tsconfig.json                  # Type-check configuration
 ├── wrangler.jsonc                 # Worker target and asset directory
@@ -64,7 +71,7 @@ Static portfolio for Arvinanto Bahtiar. [Live site](https://portofolio.arvinanto
 └── .gitignore                     # Generated files and secret exclusions
 ```
 
-Generated/local only: `dist/`, `.astro/`, `node_modules/`, `.screenshots/`, `.art-evidence/` (review captures; not part of the deployed app).
+Generated/local only: `dist/`, `.astro/`, `node_modules/`, `.screenshots/`, `.art-evidence/`, `.review-evidence/` (review captures; not part of the deployed app).
 
 ## Run and verify
 
@@ -89,6 +96,8 @@ bun run check:deploy   # Packaging dry run; does NOT publish
 - Compact headers use a modal navigation drawer when JavaScript is available; ordinary header links remain available without it.
 - Artwork: visible loops capped at eight updates/second; ARVIN button pauses/resumes. Reduced motion is static; offscreen/hidden artwork suspends.
 - Projects use manual controls, keyboard navigation and native touch scrolling. Sample writing and dummy project images remain explicitly labeled.
+- Tools use three alternating CSS marquee rows; reduced motion and no JavaScript show a static icon-and-label list. Hover and the ARVIN control pause motion.
+- Tool and credential records live in their section components. Certificate frames currently show labelled missing-image slots; supply authentic images with dimensions/alt text to enable the image/original-file links.
 
 ## Deployment
 

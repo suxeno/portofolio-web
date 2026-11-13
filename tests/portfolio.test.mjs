@@ -806,7 +806,7 @@ test('page and editorial sections use dark backgrounds and light text', async ()
 
 test('portfolio publishes source-backed sections in requested order', async () => {
  const page=await browser.newPage({javaScriptEnabled:false}); await page.goto(url);
- assert.deepEqual(await page.locator('main > section[id]').evaluateAll(nodes=>nodes.map(n=>n.id)), ['top','writing','projects','experience','achievements','contact']);
+ assert.deepEqual(await page.locator('main > section[id]').evaluateAll(nodes=>nodes.map(n=>n.id)), ['top','writing','projects','tools','experience','achievements','certificates','contact']);
  assert.match(await page.locator('#writing').textContent(), /On building reliable pipelines/);
  assert.equal(await page.locator('#projects a[href*="github.com"]').count(),3);
  assert.match(await page.locator('#experience').textContent(), /Eratani/);
@@ -863,4 +863,80 @@ test('footer offers every section and the writing archive', async () => {
  const page=await browser.newPage({javaScriptEnabled:false});await page.goto(url);
  for(const id of ['writing','projects','experience','achievements','contact']) assert.ok(await page.locator(`footer a[href="#${id}"]`).count());
  assert.ok(await page.locator('#contact a[href*="medium.com"]').count());await page.close();
+});
+
+
+test('tools and certificates preserve accessible responsive content', async () => {
+  for (const width of [320, 390, 1280, 1366, 1440]) {
+    const page = await browser.newPage({ viewport: { width, height: 844 }, reducedMotion: 'reduce' });
+    try {
+      await page.goto(url);
+      assert.equal(await page.locator('#tools .tools-accessible li').count(), 18);
+      assert.equal(await page.locator('#tools .tools-accessible img:visible').count(), 18);
+      assert.equal(await page.locator('#tools .tools-visual').isVisible(), false);
+      assert.equal(await page.locator('#tools .tools-visual[aria-hidden="true"]').count(), 1);
+      assert.equal(await page.locator('#tools .tools-visual a, #tools .tools-visual button, #tools .tools-visual [tabindex]').count(), 0);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `overflow ${width}`);
+      const slots = await page.locator('#certificates .image-slot').all();
+      assert.equal(slots.length, 3);
+      const boxes = await Promise.all(slots.map(slot => slot.boundingBox()));
+      assert.ok(Math.max(...boxes.map(b => b.width)) - Math.min(...boxes.map(b => b.width)) < 1);
+      if (width < 900) assert.ok(boxes[1].y > boxes[0].y + boxes[0].height);
+      else assert.ok(Math.abs(boxes[1].y - boxes[0].y) < 1);
+      assert.equal(await page.getByText('Certificate image awaiting source file').count(), 3);
+      assert.equal(await page.locator('#certificates a[href^="https://www.credly.com/badges/"]').count(), 3);
+      assert.match(await page.locator('#certificates').innerText(), /Issued February 2025 · Expires February 2028/);
+    } finally { await page.close(); }
+  }
+  const page = await browser.newPage({ javaScriptEnabled: false, viewport: { width: 320, height: 844 } });
+  try { await page.goto(url); assert.equal(await page.locator('#tools .tools-accessible img:visible').count(), 18); }
+  finally { await page.close(); }
+});
+
+test('tools tracks follow global control, hover, page lifecycle and two seamless cycles', async () => {
+  const page = await browser.newPage({ viewport: { width: 1280, height: 844 }, reducedMotion: 'no-preference' });
+  try {
+    await page.goto(url);
+    await page.locator('#tools').scrollIntoViewIfNeeded();
+    await page.mouse.move(0, 0);
+    await page.waitForFunction(() => document.querySelector('#tools').classList.contains('tools-running'));
+    const result = await page.locator('.tools-track').evaluateAll(tracks => tracks.map(track => {
+      const animation = track.getAnimations()[0];
+      animation.pause();
+      const duration = animation.effect.getTiming().duration;
+      const rects = [...track.children].map(el => el.getBoundingClientRect());
+      const positions = [0, duration, duration * 2].map(t => { animation.currentTime = t; return getComputedStyle(track).transform; });
+      const seam = [duration - 1, duration + 1, duration * 2 - 1, duration * 2 + 1].map(t => { animation.currentTime = t; return new DOMMatrix(getComputedStyle(track).transform).m41; });
+      animation.play();
+      return { duration, widths: rects.map(r => r.width), positions, seam, direction: getComputedStyle(track).animationDirection };
+    }));
+    assert.deepEqual(result.map(r => r.direction), ['normal', 'reverse', 'normal']);
+    assert.deepEqual(result.map(r => r.duration), [75000, 85000, 75000]);
+    for (const row of result) {
+      assert.ok(Math.abs(row.widths[0] - row.widths[1]) < 0.1);
+      assert.equal(row.positions[0], row.positions[1]); assert.equal(row.positions[1], row.positions[2]);
+      for (const i of [0, 2]) assert.ok(Math.abs(Math.abs(row.seam[i] - row.seam[i + 1]) - row.widths[0]) < 1);
+    }
+    await page.locator('#tools h2').hover();
+    assert.equal(await page.locator('.tools-track').first().evaluate(el => getComputedStyle(el).animationPlayState), 'paused');
+    await page.mouse.move(0, 0);
+    await page.getByRole('button', { name: 'Pause animations' }).click();
+    assert.equal(await page.getByRole('button', { name: 'Resume animations' }).getAttribute('aria-pressed'), 'true');
+    await page.locator('#tools').scrollIntoViewIfNeeded(); await page.mouse.move(0, 0);
+    assert.equal(await page.locator('.tools-track').first().evaluate(el => getComputedStyle(el).animationPlayState), 'paused');
+    await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pagehide', { persisted: true })));
+    assert.equal(await page.locator('#tools').evaluate(el => el.classList.contains('tools-running')), false);
+    await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true })));
+    await page.waitForFunction(() => document.querySelector('#tools').classList.contains('tools-running'));
+    await page.evaluate(() => { Object.defineProperty(document, 'hidden', { configurable: true, value: true }); document.dispatchEvent(new Event('visibilitychange')); });
+    assert.equal(await page.locator('#tools').evaluate(el => el.classList.contains('tools-running')), false);
+    await page.evaluate(() => { Object.defineProperty(document, 'hidden', { configurable: true, value: false }); document.dispatchEvent(new Event('visibilitychange')); });
+    await page.waitForFunction(() => document.querySelector('#tools').classList.contains('tools-running'));
+    await page.evaluate(() => scrollTo(0, 0));
+    await page.waitForFunction(() => !document.querySelector('#tools').classList.contains('tools-running'));
+    await page.getByRole('button', { name: 'Resume animations' }).click();
+    await page.locator('#tools').scrollIntoViewIfNeeded(); await page.mouse.move(0, 0);
+    await page.waitForFunction(() => document.querySelector('#tools').classList.contains('tools-running'));
+    assert.equal(await page.locator('.tools-track').first().evaluate(el => getComputedStyle(el).animationPlayState), 'running');
+  } finally { await page.close(); }
 });

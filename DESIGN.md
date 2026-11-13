@@ -59,6 +59,8 @@ Rectilinear lines and square-edged controls echo the terminal. Pixel forms belon
 - **Terminal:** optional command input with bounded output, alongside native links. Keep the command prompt and result readable and preserve keyboard interaction.
 - **Editorial content:** the homepage shows at most three most recent writings; a native archive lists all source records. Undated drafts retain source order. Experience is a connected timeline; recognition uses list-column ruled rows.
 - **Dither artwork:** original decorative one-bit canvas studies depict a hand and page, modules, milestones, two hands gripping and lifting a trophy with paper confetti, and an envelope. Projects and Experience have small marks immediately left of their headings. Writing and trophy use 192 × 192 buffers; the others use 96 × 72. Visible artwork repeats at a capped eight updates per second; reduced motion is static, offscreen and hidden artwork suspends, and the ARVIN title control pauses and resumes animation.
+- **Tools:** three alternating monochrome logo marquees, with a static icon-and-label list when JavaScript or motion is unavailable.
+- **Credentials:** a document folio after Achievements with links to recipient-specific badges. Source certificate images are still missing in the current review draft; placeholder panels must not be mistaken for certificates.
 - **Contact:** the collaboration question is the section heading; one direct email action leads secondary social links. The footer omits the former README block; the terminal can still display its README text.
 - **Project slider:** native overflow with previous/next buttons; project descriptions remain visible, left aligned and full width.
 - **Navigation:** labeled links, visible focus treatment and a skip link.
