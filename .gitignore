@@ -8,3 +8,5 @@ dist/
 *.log
 .screenshots/
 .astro/
+.art_evidence/
+
