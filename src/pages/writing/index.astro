@@ -1,7 +1,14 @@
 ---
 import '../../style.css';
-import { writing } from '../../content';
+import { writing as localWriting } from '../../content';
+import cmsWriting from 'virtual:cms-writing';
+import cmsSite from 'virtual:cms-site';
+import SocialMetadata from '../../components/SocialMetadata.astro';
+const ui = cmsSite?.settings.writingUi;
+const archiveTitle = ui ? `${ui.archiveTitle} — ${ui.titleSuffix}` : 'Writings — Arvin';
+const backHref = cmsSite && !cmsSite.settings.sections.some(s => s.id === 'writing' && s.visible) ? '/' : '/#writing';
+const writing = cmsWriting ?? localWriting;
 import { orderedWriting } from '../../writing-order.mjs';
 ---
-<!doctype html><html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>Writings — Arvin</title><link rel="icon" href="data:," /></head>
-<body><main class="wrap article-page"><p><a href="/#writing">← Back to portfolio</a></p><h1>Writings</h1><div class="writing-archive">{orderedWriting(writing).map(item => <p><a href={`/writing/${item.slug}/`}>{item.title} ↗</a><br /><small>{item.publishedAt ?? 'Sample draft'}</small></p>)}</div></main></body></html>
+<!doctype html><html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>{archiveTitle}</title>{cmsSite && <><meta name="description" content={cmsSite.settings.description} /><SocialMetadata title={archiveTitle} description={cmsSite.settings.description} image={cmsSite.settings.socialImage} /></>}<link rel="icon" href="data:," /></head>
+<body><main class="wrap article-page"><p><a href={backHref}>{ui?.backToPortfolio ?? '← Back to portfolio'}</a></p><h1>{ui?.archiveTitle ?? 'Writings'}</h1><div class="writing-archive">{orderedWriting(writing).map(item => <p><a href={`/writing/${item.slug}/`}>{item.title} ↗</a><br /><small>{item.publishedAt ?? (ui?.sampleDraft ?? 'Sample draft')}</small></p>)}</div></main></body></html>

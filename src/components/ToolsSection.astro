@@ -1,15 +1,19 @@
 ---
-const rows = [
+type Tool = {name:string; label:string; src:string; alt:string; width:number; height:number};
+interface Props { heading?: string; rows?: Tool[][] }
+const { heading } = Astro.props;
+const localRows = [
   [['Python','python'],['Apache Airflow','apacheairflow'],['Google BigQuery','googlebigquery'],['ClickHouse','clickhouse'],['MySQL','mysql'],['Docker','docker']],
   [['Linux','linux'],['Google Cloud','googlecloud'],['Grafana','grafana'],['Prometheus','prometheus'],['Metabase','metabase'],['JavaScript','javascript']],
   [['TensorFlow','tensorflow'],['scikit-learn','scikitlearn'],['Flask','flask'],['R','r'],['C++','cplusplus'],['Kotlin','kotlin']],
 ];
+const rows = Astro.props.rows ?? localRows.map(row => row.map(([name,icon]) => ({name,label:name,src:`/logos/${icon}.svg`,alt:'',width:22,height:22})));
 ---
 <section id="tools" class="tools wrap" aria-labelledby="tools-title">
-  <h2 id="tools-title">Tools I’ve worked with</h2>
-  <ul class="tools-accessible">{rows.flat().map(([name, icon]) => <li class="tool"><img src={`/logos/${icon}.svg`} alt="" width="22" height="22" />{name}</li>)}</ul>
+  <h2 id="tools-title">{heading ?? "Tools I’ve worked with"}</h2>
+  <ul class="tools-accessible">{rows.flat().map(item => <li class="tool" aria-label={item.label}><img src={item.src} alt="" width="22" height="22" />{item.name}</li>)}</ul>
   <div class="tools-visual" aria-hidden="true">
-    {rows.map(row => <div class="tools-row"><div class="tools-track">{[0,1].map(() => <div aria-hidden="true" class="tools-copy">{[0,1,2].map(() => row.map(([name, icon]) => <span class="tool"><img src={`/logos/${icon}.svg`} alt="" width="22" height="22" loading="lazy" />{name}</span>))}</div>)}</div></div>)}
+    {rows.map(row => <div class="tools-row">{row.length > 0 && <div class="tools-track">{[0,1].map(() => <div aria-hidden="true" class="tools-copy">{[0,1,2].map(() => row.map(item => <span class="tool"><img src={item.src} alt="" width="22" height="22" loading="lazy" />{item.name}</span>))}</div>)}</div>}</div>)}
   </div>
 </section>
 <style>
@@ -22,19 +26,23 @@ const rows = [
   .tools-visual { gap:12px; }
   .tools-row { overflow:hidden; }
   .tools-track, .tools-copy { display:flex; width:max-content; }
-  .tools-copy { gap:12px; padding-right:12px; }
+  .tools-copy { gap:12px; padding-right:12px; min-width:100vw; justify-content:space-around; }
   .tool { display:flex; align-items:center; gap:12px; padding:14px 18px; border:1px solid #555; white-space:nowrap; font-size:14px; }
   .tool img { filter:invert(1); object-fit:contain; }
+  .tool img:not([src^="/logos/"]) { filter:brightness(0) invert(1); }
   .tools-track { animation:tools-scroll 75s linear infinite; animation-play-state:paused; }
   .tools-row:nth-child(2) .tools-track { animation-direction:reverse; animation-duration:85s; }
   :global(.tools-running) .tools-track { animation-play-state:running; }
-  :global(.title-paused) .tools-track, .tools:hover .tools-track, .tools:focus-within .tools-track { animation-play-state:paused; }
+  :global(.title-paused) .tools-track, .tools-row.is-paused .tools-track { animation-play-state:paused; }
   @keyframes tools-scroll { to { transform:translateX(-50%); } }
   @media(max-width:899px) { .tools { width:calc(100% - 40px); padding:70px 0; } }
   @media(prefers-reduced-motion:reduce) { :global(.tools-enhanced) .tools-visual { display:none; } :global(.tools-enhanced) .tools-accessible { position:static; width:auto; height:auto; margin:0; overflow:visible; clip:auto; white-space:normal; } }
 </style>
 <script>
   const section = document.querySelector<HTMLElement>('#tools');
+  section?.querySelectorAll<HTMLElement>('.tools-row').forEach(row => {
+    row.addEventListener('click', () => row.classList.toggle('is-paused'));
+  });
   if ('IntersectionObserver' in window) section?.classList.add('tools-enhanced');
   let observer: IntersectionObserver | undefined;
   const update = (visible: boolean) => section?.classList.toggle('tools-running', visible && !document.hidden);

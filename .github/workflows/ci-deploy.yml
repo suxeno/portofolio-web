@@ -5,6 +5,12 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      cms-publish:
+        description: Require configured Sanity content for this build
+        type: boolean
+        default: false
+        required: true
 
 permissions:
   contents: read
@@ -28,7 +34,18 @@ jobs:
           bun-version: '1.4.4'
       - run: bun install --frozen-lockfile
       - run: bun run typecheck
-      - run: bun run test
+      - name: Baseline regression tests (local content)
+        env:
+          SANITY_PROJECT_ID: ''
+          SANITY_DATASET: ''
+        run: bun run test
+      - name: Build production output
+        env:
+          # Public deployment identifiers, not credentials.
+          SANITY_PROJECT_ID: wmzxcxbs
+          SANITY_DATASET: production
+          CMS_PUBLISH: ${{ github.event_name == 'workflow_dispatch' && inputs['cms-publish'] && 'true' || 'false' }}
+        run: node scripts/ci-production-build.mjs
       - run: bun run check:deploy
       - name: Deploy tested build
         if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')

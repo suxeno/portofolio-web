@@ -11,7 +11,7 @@ Static portfolio for Arvinanto Bahtiar. [Live site](https://portofolio.arvinanto
 - **Testing:** Node test runner + Playwright Core 1.65.0 + Chromium.
 - **Hosting:** Cloudflare Worker `portofolio`; Wrangler 4.158.0 serves `dist/` assets.
 - **Fonts:** self-hosted JetBrains Mono Regular and Silkscreen Bold 700; OFL licenses included.
-- **Backend:** none. Content is local data; terminal commands never execute a real shell.
+- **Content:** explicit unconfigured builds use local records. Configured builds use a validated published Sanity snapshot for the existing content domains. Real Sanity edit/upload/publish API checks are verified; the separate automatic-publishing bridge remains inactive. Terminal commands never execute a real shell.
 
 ## Repository map
 
@@ -89,20 +89,22 @@ bun run check:deploy   # Packaging dry run; does NOT publish
 
 ## Content and behavior
 
-- Edit records in `src/content.ts`; rebuild to publish changes. No CMS or Medium feed integration.
+- Unconfigured builds use local records. Configured builds fetch one validated published snapshot for writing, profile, site settings, projects, experience, achievements, tools and certificates; invalid data or API failures fail the build. Section order, headings and visibility are supported within existing layouts. Optional fields without existing UI remain data-only.
+- `/admin/` reports setup required unless both public `SANITY_PROJECT_ID` and `SANITY_DATASET` are configured at build time. Configured builds serve Sanity Studio using hash routing. Studio uses the public project/dataset configuration and requires an authorized account and approved CORS. Published edits require a successful rebuild. See `docs/CMS-IMPLEMENTATION.md` and `workers/cms-publish/README.md` for limitations and approval gates; never put tokens in public variables.
+- Studio dependencies are pinned in `package.json`: `@sanity/astro`, `sanity`, React, React DOM and `@astrojs/react`. Vue remains in use for public islands.
 - Writing fields: `title`, `slug`, `excerpt`, `cover`, `publishedAt`, `body`. Use unique URL-safe slugs; leave unpublished dates `null`.
 - Routes: `/` → portfolio; `/writing/` → archive; `/writing/<slug>/` → article. Homepage shows at most three recent entries; dated entries sort newest first, undated drafts retain source order.
 - Intro: four seconds on landing loads/reloads; skippable. Articles, return navigation and reduced-motion mode skip it.
 - Compact headers use a modal navigation drawer when JavaScript is available; ordinary header links remain available without it.
 - Artwork: visible loops capped at eight updates/second; ARVIN button pauses/resumes. Reduced motion is static; offscreen/hidden artwork suspends.
 - Projects use manual controls, keyboard navigation and native touch scrolling. Sample writing and dummy project images remain explicitly labeled.
-- Tools use three alternating CSS marquee rows; reduced motion and no JavaScript show a static icon-and-label list. Hover and the ARVIN control pause motion.
-- Tool and credential records live in their section components. Certificate frames currently show labelled missing-image slots; supply authentic images with dimensions/alt text to enable the image/original-file links.
+- Tools use three alternating CSS marquee rows; reduced motion and no JavaScript show a static icon-and-label list. Clicking toggles pause for that row only; hovering does not pause. The ARVIN control pauses all motion.
+- Local fallback tool and credential records live in their section components. Baseline certificates have honest missing-image slots; authentic Sanity assets can be supplied with appropriate alt text.
 
 ## Deployment
 
-- `main` push or manual workflow dispatch → frozen install → typecheck → tests/build → dry run → deploy tested assets.
-- Pull requests run checks only. CI requires repository secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`.
+- CI runs baseline tests with Sanity variables explicitly empty, then makes a separate production build with the public `wmzxcxbs` / `production` identifiers pinned in the workflow, checks that output and deploys the same output on main push/manual dispatch. Partial configuration fails; CMS dispatch requires both. With neither variable ordinary builds use local content.
+- Pull requests run checks only. Deployment requires repository secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. The separate signed webhook Worker and its secrets are not provisioned or deployed; see `workers/cms-publish/README.md`.
 - Local development, build, preview and dry-run commands do not deploy. Never commit credentials.
 
 ## Maintenance

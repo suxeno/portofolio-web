@@ -1,4 +1,4 @@
-export interface LinkedRecord { title: string; href: string; detail: string }
+export interface LinkedRecord { title: string; href: string; detail: string; cover?: {url:string; alt:string; width:number; height:number} | null }
 export interface Job { date: string; title: string; organization: string }
 export interface Writing { title: string; slug: string; excerpt: string; cover: string | null; publishedAt: string | null; body: string[] }
 export const writing: Writing[] = [

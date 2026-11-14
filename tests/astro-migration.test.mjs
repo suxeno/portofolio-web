@@ -9,7 +9,8 @@ test('Astro owns the static home page', async () => {
 
 test('the terminal is a selectively hydrated Vue island', async () => {
   const page = await readFile(new URL('../src/pages/index.astro', import.meta.url), 'utf8');
-  assert.match(page, /<Terminal\s+client:load\s*\/>/);
+  // Both sanitized README and visible section IDs are passed to the selectively hydrated island.
+  assert.match(page, /<Terminal\s+client:load\s+readme=\{settings\?\.terminalReadme\}\s+visibleSections=\{visibleSections\.map\(section => section\.id\)\}\s*\/>/);
 });
 
 test('section records come from centralized typed data', async () => {

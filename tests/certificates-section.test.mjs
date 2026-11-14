@@ -5,7 +5,8 @@ import { readFileSync } from 'node:fs';
 test('certificate folio supports authentic original images while leaving missing sources explicit', () => {
   const source = readFileSync('src/components/CertificatesSection.astro', 'utf8');
   assert.match(source, /item\.image\s*\?/);
-  assert.match(source, /href=\{item\.image\.src\}/);
+  assert.match(source, /href=\{item\.file \?\? item\.image\.src\}/);
+  assert.match(source, /View original certificate \(PDF\)/);
   assert.match(source, /alt=\{item\.image\.alt\}/);
   assert.match(source, /width=\{item\.image\.width\}/);
   assert.match(source, /height=\{item\.image\.height\}/);

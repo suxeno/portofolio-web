@@ -1,16 +1,18 @@
 ---
-type Credential = { title: string; issuer: string; date: string; href: string; image?: { src: string; alt: string; width: number; height: number } };
-const credentials: Credential[] = [
+type Credential = { title: string; issuer: string; date: string; href: string; file?: string; image?: { src: string; alt: string; width: number; height: number } };
+interface Props { heading?: string; credentials?: Credential[] }
+const { heading } = Astro.props;
+const credentials: Credential[] = Astro.props.credentials ?? [
   { title: 'Astronomer Certification for Apache Airflow 3 Fundamentals', issuer: 'Astronomer', date: 'Issued October 2025', href: 'https://www.credly.com/badges/d1639a59-4ac0-4500-a1f0-8135ca7ab8dc/linked_in_profile' },
   { title: 'AWS Academy Data Engineering', issuer: 'AWS Academy', date: 'Issued September 2024', href: 'https://www.credly.com/badges/772011bc-1e5c-466a-b60a-184a7f790738/linked_in_profile' },
   { title: 'AWS Certified AI Practitioner', issuer: 'AWS', date: 'Issued February 2025 · Expires February 2028', href: 'https://www.credly.com/badges/140bb115-31d3-4363-a78d-26f49104aefb/linked_in_profile' },
 ];
 ---
 <section class="certificates wrap" id="certificates" aria-labelledby="certificates-title">
-  <h2 id="certificates-title">Certificates</h2>
+  <h2 id="certificates-title">{heading ?? "Certificates"}</h2>
   <div class="folio">
     {credentials.map(item => <article class="document">
-      <div class="image-slot">{item.image ? <a class="image-link" href={item.image.src} aria-label={`View original certificate: ${item.title}`}><img src={item.image.src} alt={item.image.alt} width={item.image.width} height={item.image.height} loading="lazy" /></a> : <span>Certificate image awaiting source file</span>}</div>
+      <div class="image-slot">{item.image ? <a class="image-link" href={item.file ?? item.image.src} aria-label={`View original certificate: ${item.title}`}><img src={item.image.src} alt={item.image.alt} width={item.image.width} height={item.image.height} loading="lazy" /></a> : item.file ? <a href={item.file}>View original certificate (PDF)</a> : <span>Certificate image awaiting source file</span>}</div>
       <div class="document-copy"><p>{item.issuer}</p><h3>{item.title}</h3><p>{item.date}</p><a href={item.href}>View recipient badge ↗</a></div>
     </article>)}
   </div>
@@ -20,8 +22,8 @@ const credentials: Credential[] = [
   h2 { font-size:clamp(30px,4vw,52px); font-weight:400; margin:0 0 40px; }
   .folio { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); align-items:start; gap:24px; }
   .document { min-width:0; }
-  .image-slot { aspect-ratio:1.414; border:1px dashed #767676; display:grid; place-items:center; padding:24px; color:#c5c5c0; text-align:center; font-size:12px; }
-  .image-link { width:100%; height:100%; margin:0; }
+  .image-slot { position:relative; aspect-ratio:1.414; border:1px dashed #767676; display:grid; place-items:center; padding:24px; color:#c5c5c0; text-align:center; font-size:12px; }
+  .image-link { position:absolute; inset:24px; margin:0; }
   .image-link img { display:block; width:100%; height:100%; object-fit:contain; }
   .document-copy { padding-top:20px; }
   .document-copy p { color:#c5c5c0; font-size:12px; line-height:1.6; margin:0 0 10px; }

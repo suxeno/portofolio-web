@@ -1,11 +1,21 @@
 ---
 import '../../style.css';
-import { writing } from '../../content';
+import { writing as localWriting } from '../../content';
+import cmsWriting from 'virtual:cms-writing';
+import cmsSite from 'virtual:cms-site';
+import { renderPortableText } from '../../cms/portable-text.mjs';
+import SocialMetadata from '../../components/SocialMetadata.astro';
 export function getStaticPaths() {
-  return writing.map(item => ({ params: { slug: item.slug }, props: { item } }));
+  return (cmsWriting ?? localWriting).map(item => ({ params: { slug: item.slug }, props: { item, isCms: cmsWriting !== null } }));
 }
-const { item } = Astro.props;
+const { item, isCms } = Astro.props;
+const ui = cmsSite?.settings.writingUi;
+const bodyHtml = isCms ? renderPortableText(item.body) : null;
+const title = item.seo?.title ?? `${item.title} — ${ui?.titleSuffix ?? 'Arvin'}`;
+const description = item.seo?.description ?? (item.excerpt || cmsSite?.settings.description);
+const socialImage = item.seo?.socialImage ?? cmsSite?.settings.socialImage;
+const backHref = cmsSite && !cmsSite.settings.sections.some(s => s.id === 'writing' && s.visible) ? '/writing/' : '/#writing';
 ---
 <!doctype html>
-<html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>{item.title} — Arvin</title><link rel="icon" href="data:," /></head>
-<body><main class="wrap article-page"><p><a href="/#writing">← Back to writings</a></p><article><p>Sample draft</p><h1>{item.title}</h1><p>{item.excerpt}</p><div class="article-cover">DUMMY COVER IMAGE</div>{item.body.map(paragraph => <p>{paragraph}</p>)}</article></main></body></html>
+<html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>{title}</title>{isCms && description && <><meta name="description" content={description} /><SocialMetadata title={title} description={description} image={socialImage} /></>}<link rel="icon" href="data:," /></head>
+<body><main class="wrap article-page"><p><a href={backHref}>{ui?.backToWritings ?? '← Back to writings'}</a></p><article>{!item.publishedAt && <p>{ui?.sampleDraft ?? 'Sample draft'}</p>}<h1>{item.title}</h1><p>{item.excerpt}</p>{isCms && item.cover ? <figure><img src={item.cover.url} alt={item.cover.alt} width={item.cover.width} height={item.cover.height} style="max-width:100%;height:auto" />{item.cover.caption && <figcaption>{item.cover.caption}</figcaption>}</figure> : <div class="article-cover">{ui?.dummyCover ?? 'DUMMY COVER IMAGE'}</div>}{isCms ? <div class="portable-body" set:html={bodyHtml} /> : item.body.map(paragraph => <p>{paragraph}</p>)}</article></main></body></html>

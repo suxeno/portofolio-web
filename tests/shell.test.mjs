@@ -1,6 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
+test('help excludes hidden section commands', async () => {
+  const {runCommand} = await import('../src/shell.ts');
+  const help = runCommand('/home/arvin','help',undefined,['writing','contact']).output;
+  assert.match(help,/writing/);
+  assert.doesNotMatch(help,/projects|experience|achievements/);
+});
+
 test('the simulated shell resolves project navigation without a DOM', async () => {
   const shell = await import('../src/shell.ts').catch(() => null);
   assert.ok(shell, 'a DOM-independent simulated shell must exist');

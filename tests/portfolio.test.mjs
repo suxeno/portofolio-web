@@ -893,7 +893,7 @@ test('tools and certificates preserve accessible responsive content', async () =
   finally { await page.close(); }
 });
 
-test('tools tracks follow global control, hover, page lifecycle and two seamless cycles', async () => {
+test('tools tracks follow per-row click pause, global control, page lifecycle and two seamless cycles', async () => {
   const page = await browser.newPage({ viewport: { width: 1280, height: 844 }, reducedMotion: 'no-preference' });
   try {
     await page.goto(url);
@@ -917,8 +917,20 @@ test('tools tracks follow global control, hover, page lifecycle and two seamless
       assert.equal(row.positions[0], row.positions[1]); assert.equal(row.positions[1], row.positions[2]);
       for (const i of [0, 2]) assert.ok(Math.abs(Math.abs(row.seam[i] - row.seam[i + 1]) - row.widths[0]) < 1);
     }
+    const rows = page.locator('#tools .tools-row');
+    const states = () => rows.locator('.tools-track').evaluateAll(els => els.map(el => getComputedStyle(el).animationPlayState));
     await page.locator('#tools h2').hover();
-    assert.equal(await page.locator('.tools-track').first().evaluate(el => getComputedStyle(el).animationPlayState), 'paused');
+    assert.deepEqual(await states(), ['running', 'running', 'running']);
+    await rows.first().hover();
+    assert.deepEqual(await states(), ['running', 'running', 'running']);
+    await rows.first().click();
+    assert.deepEqual(await states(), ['paused', 'running', 'running']);
+    await rows.nth(1).click();
+    assert.deepEqual(await states(), ['paused', 'paused', 'running']);
+    await rows.first().click();
+    assert.deepEqual(await states(), ['running', 'paused', 'running']);
+    await rows.nth(1).click();
+    assert.deepEqual(await states(), ['running', 'running', 'running']);
     await page.mouse.move(0, 0);
     await page.getByRole('button', { name: 'Pause animations' }).click();
     assert.equal(await page.getByRole('button', { name: 'Resume animations' }).getAttribute('aria-pressed'), 'true');

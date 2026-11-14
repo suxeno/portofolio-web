@@ -20,7 +20,8 @@ function onKey(event: KeyboardEvent) {
   <div class="slider-controls"><button type="button" aria-label="Previous project" @click="move(-1)">←</button><button type="button" aria-label="Next project" @click="move(1)">→</button></div>
   <div ref="slider" class="project-slider" tabindex="0" aria-label="Projects" @keydown="onKey">
     <div v-for="(item, index) in items" :key="item.href" class="entry project-card">
-      <div class="project-image" role="img" :aria-label="`Dummy image for ${item.title}`">DUMMY IMAGE / {{ String(index + 1).padStart(2, '0') }}</div>
+      <div v-if="item.cover" class="project-image"><img :src="item.cover.url" :alt="item.cover.alt" :width="item.cover.width" :height="item.cover.height" style="width:100%;height:100%;object-fit:cover" /></div>
+      <div v-else class="project-image" role="img" :aria-label="`Dummy image for ${item.title}`">DUMMY IMAGE / {{ String(index + 1).padStart(2, '0') }}</div>
       <h3><a :href="item.href">{{ item.title }} ↗</a></h3><p>{{ item.detail }}</p>
     </div>
   </div>

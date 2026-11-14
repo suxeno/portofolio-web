@@ -6,7 +6,24 @@ import ProjectSlider from "../components/ProjectSlider.vue";
 import EditorialSection from "../components/EditorialSection.astro";
 import ToolsSection from "../components/ToolsSection.astro";
 import CertificatesSection from "../components/CertificatesSection.astro";
-import { writing, projects, experience, achievements } from "../content";
+import SocialMetadata from "../components/SocialMetadata.astro";
+import { writing as localWriting, projects as localProjects, experience as localExperience, achievements as localAchievements } from "../content";
+import cmsCareer from 'virtual:cms-career';
+import cmsCollections from 'virtual:cms-collections';
+import cmsProjects from 'virtual:cms-projects';
+import cmsWriting from 'virtual:cms-writing';
+import cmsSite from 'virtual:cms-site';
+const settings = cmsSite?.settings;
+const profile = cmsSite?.profile;
+const nav = settings?.navigation ?? [{label:'Writings',url:'#writing'},{label:'Projects',url:'#projects'},{label:'Experience',url:'#experience'},{label:'Contact ↗',url:'#contact'}];
+const footerNav = settings?.footerNavigation ?? [{label:'Writings',url:'#writing'},{label:'Projects',url:'#projects'},{label:'Experience',url:'#experience'},{label:'Achievements',url:'#achievements'},{label:'Contact',url:'#contact'}];
+const sections = settings?.sections ?? ['writing','projects','tools','experience','achievements','certificates','contact'].map(id => ({id,visible:true,heading:undefined}));
+const visibleSections = sections.filter(section => section.visible);
+const terminalLinks = [{label:'Writings ↗',url:'#writing'},{label:'Projects ↗',url:'#projects'},{label:'Experience ↗',url:'#experience'},{label:'Achievements ↗',url:'#achievements'},{label:'Contact ↗',url:'#contact'}].filter(link => visibleSections.some(section => `#${section.id}` === link.url));
+const writing = cmsWriting ?? localWriting;
+const projects = cmsProjects ?? localProjects;
+const experience = cmsCareer?.experience ?? localExperience;
+const achievements = cmsCareer?.achievements ?? localAchievements;
 import { latestWriting } from "../writing-order.mjs";
 ---
 <!doctype html>
@@ -14,54 +31,57 @@ import { latestWriting } from "../writing-order.mjs";
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Arvinanto Bahtiar — data engineer working across data engineering, monitoring, and applied AI." />
-  <title>Arvinanto Bahtiar — Data Engineer</title>
+  <meta name="description" content={settings?.description ?? 'Arvinanto Bahtiar — data engineer working across data engineering, monitoring, and applied AI.'} />
+  <title>{settings?.title ?? 'Arvinanto Bahtiar — Data Engineer'}</title>
+  {settings && <SocialMetadata title={settings.title} description={settings.description} image={settings.socialImage} />}
   <link rel="icon" href="data:," />
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
   <header class="site-header wrap">
-    <a class="wordmark" href="#top">ARVIN / PROFILE</a>
-    <nav aria-label="Main navigation"><a href="#writing">Writings</a><a href="#projects">Projects</a><a href="#experience">Experience</a><a href="#contact">Contact ↗</a></nav>
+    <a class="wordmark" href="#top">{settings?.wordmark ?? 'ARVIN / PROFILE'}</a>
+    <nav aria-label="Main navigation">{nav.map(link => <a href={link.url}>{link.label}</a>)}</nav>
     <button class="menu-trigger" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu" hidden><span aria-hidden="true">☰</span></button>
   </header>
   <dialog id="mobile-menu" aria-label="Main navigation">
     <button class="menu-close" type="button" aria-label="Close menu">×</button>
-    <nav aria-label="Mobile navigation"><ul><li><a href="#writing">Writings</a></li><li><a href="#projects">Projects</a></li><li><a href="#experience">Experience</a></li><li><a href="#contact">Contact ↗</a></li></ul></nav>
+    <nav aria-label="Mobile navigation"><ul>{nav.map(link => <li><a href={link.url}>{link.label}</a></li>)}</ul></nav>
   </dialog>
   <main id="main">
     <section class="hero wrap" id="top" aria-labelledby="hero-title">
       <div class="terminal">
-        <h1 id="hero-title"><button class="motion-toggle art-toggle" type="button" aria-label="Pause animations" aria-pressed="false">Arvin</button></h1>
-        <p class="role">Data Engineering | ML/AI Engineering</p>
-        <p class="intro">Building reliable data pipelines and scalable data solutions for analytics and AI-powered applications.</p>
+        <h1 id="hero-title"><button class="motion-toggle art-toggle" type="button" aria-label="Pause animations" aria-pressed="false">{profile?.displayName ?? 'Arvin'}</button></h1>
+        <p class="role">{profile?.expertiseLine ?? 'Data Engineering | ML/AI Engineering'}</p>
+        <p class="intro">{profile?.biography ?? 'Building reliable data pipelines and scalable data solutions for analytics and AI-powered applications.'}</p>
 
-        <nav class="terminal-list" aria-label="Portfolio directories"><a href="#writing">Writings ↗</a><a href="#projects">Projects ↗</a><a href="#experience">Experience ↗</a><a href="#achievements">Achievements ↗</a><a href="#contact">Contact ↗</a></nav>
-        <Terminal client:load />
+        <nav class="terminal-list" aria-label="Portfolio directories">{terminalLinks.map(link => <a href={link.url}>{link.label}</a>)}</nav>
+        <Terminal client:load readme={settings?.terminalReadme} visibleSections={visibleSections.map(section => section.id)} />
         <noscript><p>Command input requires JavaScript. Directory links remain available.</p></noscript>
       </div>
     </section>
 
-    <EditorialSection id="writing" lead="" emphasis="Writings">
-      {latestWriting(writing).map((item, index) => <div class="entry"><a class="writing-link" href={`/writing/${item.slug}/`}><span>{item.publishedAt ?? 'SAMPLE DRAFT'}</span><strong>{item.title}</strong><span>Read article ↗</span></a></div>)}
-      <p class="writing-more"><a href="/writing/">See all writings ↗</a></p>
+    {visibleSections.map(section => <>
+    {section.id === "writing" && <EditorialSection id="writing" lead="" emphasis={section.heading ?? "Writings"}>
+      {latestWriting(writing).map((item, index) => <div class="entry"><a class="writing-link" href={`/writing/${item.slug}/`}><span>{item.publishedAt ?? (settings?.writingUi.sampleDraftHome ?? settings?.writingUi.sampleDraft ?? 'SAMPLE DRAFT')}</span><strong>{item.title}</strong><span>{settings?.writingUi.readArticle ?? 'Read article ↗'}</span></a></div>)}
+      <p class="writing-more"><a href="/writing/">{settings?.writingUi.seeAllWritings ?? 'See all writings ↗'}</a></p>
 
-    </EditorialSection>
-    <EditorialSection id="projects" lead="" emphasis="Projects">
+    </EditorialSection>}
+    {section.id === "projects" && <EditorialSection id="projects" lead="" emphasis={section.heading ?? "Projects"}>
       <ProjectSlider client:load items={projects.map(item => item)} />
-    </EditorialSection>
-    <ToolsSection />
-    <EditorialSection id="experience" lead="" emphasis="Experience">
+    </EditorialSection>}
+    {section.id === "tools" && <ToolsSection heading={section.heading} rows={cmsCollections?.rows} />}
+    {section.id === "experience" && <EditorialSection id="experience" lead="" emphasis={section.heading ?? "Experience"}>
       {experience.map(item => <div class="entry"><div class="entry-date">{item.date}</div><h3>{item.title}</h3><p>{item.organization}</p></div>)}
-    </EditorialSection>
-    <EditorialSection id="achievements" lead="" emphasis="Achievements">
+    </EditorialSection>}
+    {section.id === "achievements" && <EditorialSection id="achievements" lead="" emphasis={section.heading ?? "Achievements"}>
       {achievements.map(item => <div class="entry"><p>{item}</p></div>)}
-    </EditorialSection>
-    <CertificatesSection />
-    <section class="contact-section" id="contact" aria-labelledby="contact-title"><div class="wrap contact-inner"><div class="contact-art"><canvas class="section-art" data-dither="contact" aria-hidden="true" width="96" height="72"></canvas></div><div><h2 id="contact-title" class="contact-invitation" tabindex="-1">Building something with Data or AI?</h2><div class="contact-links"><a href="mailto:arvinantobahtiar@gmail.com">Contact me ↗</a><a href="https://www.linkedin.com/in/arvinanto/">LinkedIn <span aria-hidden="true">↗</span></a><a href="https://github.com/suxeno">GitHub <span aria-hidden="true">↗</span></a><a href="https://medium.com/@arvinantobahtiar">Medium <span aria-hidden="true">↗</span></a></div></div></div>
-    </section>
+    </EditorialSection>}
+    {section.id === "certificates" && <CertificatesSection heading={section.heading} credentials={cmsCollections?.credentials} />}
+    {section.id === "contact" && <section class="contact-section" id="contact" aria-labelledby="contact-title"><div class="wrap contact-inner"><div class="contact-art"><canvas class="section-art" data-dither="contact" aria-hidden="true" width="96" height="72"></canvas></div><div><h2 id="contact-title" class="contact-invitation" tabindex="-1">{section.heading ?? settings?.contactQuestion ?? 'Building something with Data or AI?'}</h2><div class="contact-links"><a href={`mailto:${profile?.email ?? 'arvinantobahtiar@gmail.com'}`}>{settings?.contactAction ?? 'Contact me ↗'}</a>{profile ? profile.links.map(link => <a href={link.url}>{link.label} <span aria-hidden="true">↗</span></a>) : <><a href="https://www.linkedin.com/in/arvinanto/">LinkedIn <span aria-hidden="true">↗</span></a><a href="https://github.com/suxeno">GitHub <span aria-hidden="true">↗</span></a><a href="https://medium.com/@arvinantobahtiar">Medium <span aria-hidden="true">↗</span></a></>}</div></div></div>
+    </section>}
+    </>)}
   </main>
-  <footer class="wrap"><span>ARVIN / PROFILE</span><nav aria-label="Footer navigation"><a href="#writing">Writings</a><a href="#projects">Projects</a><a href="#experience">Experience</a><a href="#achievements">Achievements</a><a href="#contact">Contact</a></nav><a href="#top">Back to top ↑</a></footer>
+  <footer class="wrap"><span>{settings?.wordmark ?? 'ARVIN / PROFILE'}</span><nav aria-label="Footer navigation">{footerNav.map(link => <a href={link.url}>{link.label}</a>)}</nav><a href="#top">{settings?.footerBackToTop ?? 'Back to top ↑'}</a></footer>
 <script>import "../main"; import "../section-art"; import "../mobile-nav";</script>
 </body>
 </html>
