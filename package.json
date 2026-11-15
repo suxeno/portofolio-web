@@ -12,9 +12,11 @@
     "typecheck": "astro check && vue-tsc --noEmit",
     "test": "bun run build && node --test tests/*.test.mjs",
     "build": "astro build",
-    "check:deploy": "wrangler deploy --config wrangler.jsonc --dry-run"
+    "check:deploy": "node scripts/validate-ssr-artifact.mjs && wrangler deploy --config dist/server/wrangler.json --dry-run",
+    "deploy:tested": "node scripts/validate-ssr-artifact.mjs && wrangler deploy --config dist/server/wrangler.json"
   },
   "dependencies": {
+    "@astrojs/cloudflare": "14.4.3",
     "@astrojs/react": "7.1.9",
     "@astrojs/vue": "7.1.2",
     "@sanity/astro": "3.6.2",
@@ -31,6 +33,6 @@
     "playwright-core": "1.65.0",
     "typescript": "6.0.3",
     "vue-tsc": "3.3.14",
-    "wrangler": "4.158.0"
+    "wrangler": "^4.162.0"
   }
 }

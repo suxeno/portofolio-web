@@ -1,9 +1,8 @@
 import { test, after, before } from 'node:test';
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
 import { chromium } from 'playwright-core';
 import { existsSync } from 'node:fs';
-import { createServer } from 'node:net';
+import { createSsrFixture } from './helpers/ssr-fixture.mjs';
 
 test('compact header opens accessible drawer and restores focus on Escape', async () => {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
@@ -116,27 +115,17 @@ async function trackMotion(page) {
     document.addEventListener('DOMContentLoaded', observe, { once: true });
   });
 }
-let server, browser;
+let fixture, browser;
 let url;
 before(async () => {
-  const reservation = createServer();
-  await new Promise(resolve => reservation.listen(0, '127.0.0.1', resolve));
-  const port = reservation.address().port;
-  await new Promise(resolve => reservation.close(resolve));
-  url = `http://127.0.0.1:${port}`;
-  server = spawn('./node_modules/.bin/astro', ['preview', '--host', '127.0.0.1', '--port', String(port), '--ignore-lock'], { stdio: 'ignore', detached: true });
-  let ready = false;
-  for (let i = 0; i < 100; i++) { try { if ((await fetch(url)).ok) { ready = true; break; } } catch {} await new Promise(r => setTimeout(r, 100)); }
-  if (!ready) throw Error('Astro preview did not start');
+  fixture = await createSsrFixture();
+  url = fixture.url;
   const executablePath = process.env.CHROMIUM_PATH || ['/usr/bin/chromium', '/usr/bin/chromium-browser', '/usr/bin/google-chrome', '/usr/bin/google-chrome-stable'].find(existsSync);
   if (!executablePath) throw Error('Chromium/Chrome not found; set CHROMIUM_PATH');
   browser = await chromium.launch({ executablePath, args: ['--no-sandbox', '--disable-gpu'] });
 });
 after(async () => {
-  await browser?.close();
-  if (server?.pid) {
-    try { process.kill(-server.pid, 'SIGTERM'); } catch (error) { if (error.code !== 'ESRCH') throw error; }
-  }
+  try { await browser?.close(); } finally { await fixture?.dispose(); }
 });
 test('dither renders distinct binary studies after a cached-page restore', async () => {
   const page = await browser.newPage({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
@@ -458,14 +447,21 @@ test('native writing navigation and article reload never show the intro', async 
 
 test('returning from an article skips the intro, but a landing reload shows it', async () => {
  const page = await browser.newPage();
- await page.goto(url); await page.keyboard.press('Escape');
- await page.locator('#writing a').first().click();
- await page.locator('a[href="/#writing"]').click();
- assert.equal(await page.locator('.boot').count(), 0, 'return link should not replay intro');
- await page.reload(); assert.equal(await page.locator('.boot').count(), 1, 'intentional reload should replay intro');
- await page.keyboard.press('Escape'); await page.locator('#writing a').first().click();
- await page.goBack(); assert.equal(await page.locator('.boot').count(), 0, 'browser back should not replay intro');
- await page.close();
+ const responses = [], errors = [];
+ page.on('response', response => { if (response.request().isNavigationRequest()) responses.push({url: response.url(), status: response.status()}); });
+ page.on('pageerror', error => errors.push(error.message));
+ try {
+  await page.goto(url); await page.keyboard.press('Escape');
+  await page.locator('#writing a').first().click();
+  await page.locator('a[href="/#writing"]').click();
+  assert.equal(await page.locator('.boot').count(), 0, 'return link should not replay intro');
+  await page.reload(); assert.equal(await page.locator('.boot').count(), 1, 'intentional reload should replay intro');
+  await page.keyboard.press('Escape'); await page.locator('#writing a').first().click();
+  await page.goBack(); assert.equal(await page.locator('.boot').count(), 0, 'browser back should not replay intro');
+ } catch (error) {
+  console.error('article-return diagnostics', JSON.stringify({url: page.url(), responses, errors}));
+  throw error;
+ } finally { await page.close(); }
 });
 
 test('career content and contact work without JavaScript', async () => {

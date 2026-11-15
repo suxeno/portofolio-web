@@ -1,14 +1,15 @@
 ---
 import '../../style.css';
 import { writing as localWriting } from '../../content';
-import cmsWriting from 'virtual:cms-writing';
-import cmsSite from 'virtual:cms-site';
+import { loadRequestContent } from '../../cms/request-content.mjs';
+const config = __SANITY_PROJECT_ID__ ? {projectId: __SANITY_PROJECT_ID__, dataset: __SANITY_DATASET__} : null;
+const snapshot = config ? await loadRequestContent(config) : null;
+const cmsWriting = snapshot?.writing, cmsSite = snapshot?.site;
 import { renderPortableText } from '../../cms/portable-text.mjs';
 import SocialMetadata from '../../components/SocialMetadata.astro';
-export function getStaticPaths() {
-  return (cmsWriting ?? localWriting).map(item => ({ params: { slug: item.slug }, props: { item, isCms: cmsWriting !== null } }));
-}
-const { item, isCms } = Astro.props;
+const item = (cmsWriting ?? localWriting).find(item => item.slug === Astro.params.slug);
+if (!item) return new Response('Not found', {status: 404});
+const isCms = !!snapshot;
 const ui = cmsSite?.settings.writingUi;
 const bodyHtml = isCms ? renderPortableText(item.body) : null;
 const title = item.seo?.title ?? `${item.title} — ${ui?.titleSuffix ?? 'Arvin'}`;

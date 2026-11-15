@@ -1,17 +1,17 @@
 # portofolio-web
 
-Static portfolio for Arvinanto Bahtiar. [Live site](https://portofolio.arvinantobahtiar.workers.dev)
+Portfolio for Arvinanto Bahtiar. [Live site](https://portofolio.arvinantobahtiar.workers.dev)
 
 ## Technical specification
 
-- **Frontend:** Astro 7.4.7 static HTML; Vue 3.5.45 islands for terminal and project slider.
+- **Frontend:** Astro 7.4.7 server-rendered HTML; Vue 3.5.45 islands for terminal and project slider.
 - **Motion:** GSAP 3.15.1 + ScrollTrigger; Canvas 2D for one-bit artwork. No p5.js or Three.js.
 - **Language:** TypeScript 6.0.3; ESM.
 - **Toolchain:** Bun 1.4.4; Node.js ≥22.23.4; exact dependencies in `bun.lock`.
 - **Testing:** Node test runner + Playwright Core 1.65.0 + Chromium.
-- **Hosting:** Cloudflare Worker `portofolio`; Wrangler 4.158.0 serves `dist/` assets.
+- **Hosting:** Cloudflare Worker `portofolio`; the lockfile resolves Wrangler 4.162.0 for the generated Worker and client assets.
 - **Fonts:** self-hosted JetBrains Mono Regular and Silkscreen Bold 700; OFL licenses included.
-- **Content:** explicit unconfigured builds use local records. Configured builds use a validated published Sanity snapshot for the existing content domains. Real Sanity edit/upload/publish API checks are verified; the separate automatic-publishing bridge remains inactive. Terminal commands never execute a real shell.
+- **Content:** Explicit unconfigured mode uses local records. The deployed SSR Worker reads and validates published public Sanity data, with a 60-second shared edge cache for eligible responses. Sanity CDN may add propagation delay. Terminal commands never execute a real shell.
 
 ## Repository map
 
@@ -22,14 +22,16 @@ Static portfolio for Arvinanto Bahtiar. [Live site](https://portofolio.arvinanto
 │   │   ├── index.astro              # Portfolio homepage
 │   │   └── writing/
 │   │       ├── index.astro          # Complete writing archive
-│   │       └── [slug].astro         # Generated article pages
+│   │       └── [slug].astro         # Runtime article pages
 │   ├── components/
 │   │   ├── EditorialSection.astro   # Section heading and artwork shell
 │   │   ├── ToolsSection.astro       # Three-row marquee and static logo list
 │   │   ├── CertificatesSection.astro # Uniform certificate frames and source links
 │   │   ├── Terminal.vue            # Command input, output and keyboard handling
 │   │   └── ProjectSlider.vue       # Manual project carousel
-│   ├── content.ts                  # Writing, projects, roles and achievements
+│   ├── cms/                        # Sanity schemas, validation and runtime adapters
+│   ├── worker.mjs                  # SSR gateway and shared-cache entrypoint
+│   ├── content.ts                  # Local fallback writing, projects and career records
 │   ├── shell.ts                    # Safe local command/path parser
 │   ├── main.ts                     # Landing intro and navigation lifecycle
 │   ├── mobile-nav.ts               # Compact modal navigation lifecycle
@@ -50,7 +52,7 @@ Static portfolio for Arvinanto Bahtiar. [Live site](https://portofolio.arvinanto
 │   ├── shell.test.mjs               # Command parser unit tests
 │   ├── tools-section.test.mjs       # Tool markup and motion fallback checks
 │   ├── certificates-section.test.mjs # Credential records and image-ready markup
-│   ├── writing-revision.test.mjs    # Preview cap and archive generation fixtures
+│   ├── writing-revision.test.mjs    # Preview cap and archive runtime fixtures
 │   └── capture.mjs                 # Local preview screenshot utility
 ├── docs/
 │   ├── content-sources.md          # Factual content provenance
@@ -63,9 +65,9 @@ Static portfolio for Arvinanto Bahtiar. [Live site](https://portofolio.arvinanto
 ├── DESIGN.md                      # Current visual system and behavior
 ├── TOOLS-PROVENANCE.md             # Logo sources, licensing and tool provenance
 ├── CREDENTIALS-PROVENANCE.md        # Credential sources and missing-image status
-├── astro.config.mjs               # Static output and Vue integration
+├── astro.config.mjs               # Cloudflare SSR and Vue integration
 ├── tsconfig.json                  # Type-check configuration
-├── wrangler.jsonc                 # Worker target and asset directory
+├── wrangler.jsonc                 # Astro build input for Worker configuration
 ├── package.json                   # Scripts and dependency versions
 ├── bun.lock                       # Locked dependencies
 └── .gitignore                     # Generated files and secret exclusions
@@ -83,14 +85,15 @@ bun run dev            # Development server; open the printed local URL
 bun run typecheck      # Astro, Vue and TypeScript diagnostics
 bun run test           # Production build, unit tests and Chromium regressions
 bun run build          # Generate dist/
-bunx astro preview     # Serve the production build locally
-bun run check:deploy   # Packaging dry run; does NOT publish
+bunx wrangler dev --config dist/server/wrangler.json  # Local Worker preview
+CMS_PUBLISH=true bun scripts/ci-production-build.mjs # configured build and artifact seal
+bun run check:deploy   # Validate sealed artifact and dry run; does NOT publish
 ```
 
 ## Content and behavior
 
-- Unconfigured builds use local records. Configured builds fetch one validated published snapshot for writing, profile, site settings, projects, experience, achievements, tools and certificates; invalid data or API failures fail the build. Section order, headings and visibility are supported within existing layouts. Optional fields without existing UI remain data-only.
-- `/admin/` reports setup required unless both public `SANITY_PROJECT_ID` and `SANITY_DATASET` are configured at build time. Configured builds serve Sanity Studio using hash routing. Studio uses the public project/dataset configuration and requires an authorized account and approved CORS. Published edits require a successful rebuild. See `docs/CMS-IMPLEMENTATION.md` and `workers/cms-publish/README.md` for limitations and approval gates; never put tokens in public variables.
+- Unconfigured mode uses local records. Configured SSR requests fetch one validated published snapshot for writing, profile, site settings, projects, experience, achievements, tools and certificates; invalid data or API failure fails the request without fallback. Section order, headings and visibility are supported within existing layouts. Optional fields without existing UI remain data-only.
+- `/admin/` reports setup required unless both public `SANITY_PROJECT_ID` and `SANITY_DATASET` are configured at build time. Configured builds serve Sanity Studio using hash routing. Studio uses the public project/dataset configuration and requires an authorized account and approved CORS. Published edits do not require a rebuild, subject to edge and Sanity CDN propagation. Production Studio editing, image uploads and GUI publishing have been verified with a hidden disposable writing. See `docs/CMS-IMPLEMENTATION.md`; never put tokens in public variables.
 - Studio dependencies are pinned in `package.json`: `@sanity/astro`, `sanity`, React, React DOM and `@astrojs/react`. Vue remains in use for public islands.
 - Writing fields: `title`, `slug`, `excerpt`, `cover`, `publishedAt`, `body`. Use unique URL-safe slugs; leave unpublished dates `null`.
 - Routes: `/` → portfolio; `/writing/` → archive; `/writing/<slug>/` → article. Homepage shows at most three recent entries; dated entries sort newest first, undated drafts retain source order.
@@ -103,9 +106,10 @@ bun run check:deploy   # Packaging dry run; does NOT publish
 
 ## Deployment
 
-- CI runs baseline tests with Sanity variables explicitly empty, then makes a separate production build with the public `wmzxcxbs` / `production` identifiers pinned in the workflow, checks that output and deploys the same output on main push/manual dispatch. Partial configuration fails; CMS dispatch requires both. With neither variable ordinary builds use local content.
-- Pull requests run checks only. Deployment requires repository secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. The separate signed webhook Worker and its secrets are not provisioned or deployed; see `workers/cms-publish/README.md`.
+- CI runs baseline tests with Sanity variables explicitly empty, then makes a separate sealed production SSR build with the public `wmzxcxbs` / `production` identifiers pinned in the workflow, validates the generated `dist/server/wrangler.json` and deploys that same output on main push/manual dispatch. The seal detects changes to output; it is not a signature. Further push or deploy requires separate approval. Partial configuration fails; CMS dispatch requires both. With neither variable ordinary builds use local content.
+- Pull requests run checks only. Deployment requires repository secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. The legacy signed rebuild-webhook Worker and its secrets are inactive and not needed for SSR; see `workers/cms-publish/README.md`.
 - Local development, build, preview and dry-run commands do not deploy. Never commit credentials.
+- Platform cache is tested separately from the local suite: `python3 scripts/cms-live-cache-probe.py EXPECTED_ACTIVE_VERSION_ID` checks the active production version and takes at least 65 seconds. It uses the existing `/writing/data-systems/` article and fails if that article is removed; update the probe to an existing canonical article if needed. `X-Portfolio-Render` is a public random identifier per inner render, not a secret or visitor identifier.
 
 ## Maintenance
 

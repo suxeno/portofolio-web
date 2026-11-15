@@ -12,6 +12,13 @@ test('CMS workflow tests local output first, rebuilds once with scoped public va
  assert.match(workflow,/bun run test[\s\S]*node scripts\/ci-production-build\.mjs[\s\S]*bun run check:deploy[\s\S]*Deploy tested build/);
  assert.match(workflow,/SANITY_PROJECT_ID: wmzxcxbs/);
  assert.match(workflow,/SANITY_DATASET: production/);
+ assert.match(workflow,/run: bun run deploy:tested/);
+ const pkg = JSON.parse(readFileSync('package.json','utf8'));
+ for (const name of ['check:deploy','deploy:tested']) {
+  assert.match(pkg.scripts[name],/validate-ssr-artifact\.mjs/);
+  assert.match(pkg.scripts[name],/--config dist\/server\/wrangler\.json/);
+ }
+ assert.match(pkg.scripts['check:deploy'],/--dry-run/);
 });
 test('CMS guard rejects absent or partial config and removes stale output before failure',()=>{
  const cwd=mkdtempSync(join(process.env.TMPDIR || tmpdir(),'cms-ci-'));

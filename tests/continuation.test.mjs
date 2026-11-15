@@ -1,8 +1,11 @@
-import { test } from 'node:test';
+import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { createSsrFixture } from './helpers/ssr-fixture.mjs';
 
-const html = () => readFile(new URL('../dist/index.html', import.meta.url), 'utf8');
+let fixture;
+before(async () => { fixture = await createSsrFixture(); });
+after(async () => { if (fixture) await fixture.dispose(); });
+const html = () => fixture.html('/');
 test('centralized section data appears in the built HTML', async () => {
   const page = await html();
   for (const text of ['On building reliable pipelines', 'Drowsiness detection camera', 'Eratani', 'DINAMIKA']) assert.ok(page.includes(text));

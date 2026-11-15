@@ -1,5 +1,11 @@
 {
   "name": "portofolio",
   "compatibility_date": "2026-10-28",
+  "main": "./src/worker.mjs",
+  "cache": { "enabled": true },
+  "exports": {
+    "default": { "type": "worker", "cache": { "enabled": false } },
+    "CachedPage": { "type": "worker", "cache": { "enabled": true } }
+  },
   "assets": { "directory": "./dist" }
 }
