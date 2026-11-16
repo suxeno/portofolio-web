@@ -13,7 +13,7 @@ const credentials: Credential[] = Astro.props.credentials ?? [
   <div class="folio">
     {credentials.map(item => <article class="document">
       <div class="image-slot">{item.image ? <a class="image-link" href={item.file ?? item.image.src} aria-label={`View original certificate: ${item.title}`}><img src={item.image.src} alt={item.image.alt} width={item.image.width} height={item.image.height} loading="lazy" /></a> : item.file ? <a href={item.file}>View original certificate (PDF)</a> : <span>Certificate image awaiting source file</span>}</div>
-      <div class="document-copy"><p>{item.issuer}</p><h3>{item.title}</h3><p>{item.date}</p><a href={item.href}>View recipient badge ↗</a></div>
+      <div class="document-copy"><p>{item.issuer}</p><h3>{item.title}</h3><p>{item.date}</p><a href={item.href}>View evidence ↗</a></div>
     </article>)}
   </div>
 </section>

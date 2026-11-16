@@ -104,7 +104,7 @@ bun run check:deploy   # Validate sealed artifact and dry run; does NOT publish
 - Projects use manual controls, keyboard navigation and native touch scrolling. Studio edits Title, Description, Destination URL and Cover with alt text; Order and Visible are under Display settings. Existing legacy links remain supported; unused stored fields are preserved, not deleted. Sample writing and dummy project images remain explicitly labeled.
 - Achievement titles link to the first safe CMS Links URL when supplied; otherwise they remain plain text. Uploaded evidence files do not automatically become link destinations. Achievement and Contact social links use a white sweep; footer navigation and project titles use faint resting underlines with full-color hover/focus sweeps. Homepage Writing and Experience entries scale subtly on hover, respecting pause and reduced motion.
 - Tools use three alternating CSS marquee rows; reduced motion and no JavaScript show a static icon-and-label list. Clicking toggles pause for that row only; hovering does not pause. The ARVIN control pauses all motion.
-- Local fallback tool and credential records live in their section components. Baseline certificates have honest missing-image slots; authentic Sanity assets can be supplied with appropriate alt text.
+- Local fallback tool and credential records live in their section components. Baseline certificates have honest missing-image slots; authentic Sanity assets can be supplied with appropriate alt text. Certificate links use the generic “View evidence” label without changing their configured destinations.
 
 ## Deployment
 

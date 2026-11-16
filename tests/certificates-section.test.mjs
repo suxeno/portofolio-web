@@ -12,4 +12,6 @@ test('certificate folio supports authentic original images while leaving missing
   assert.match(source, /height=\{item\.image\.height\}/);
   assert.match(source, /object-fit:\s*contain/);
   assert.match(source, /Certificate image awaiting source file/);
+  assert.match(source, /<a href=\{item\.href\}>View evidence ↗<\/a>/);
+  assert.doesNotMatch(source, /View recipient badge/);
 });
