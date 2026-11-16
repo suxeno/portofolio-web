@@ -18,7 +18,7 @@ Counts are programmatically checked by `tests/cms-inventory.test.mjs` and baseli
 
 | Source | Baseline | Schema/render mapping |
 | --- | --- | --- |
-| `src/content.ts` | 3 writings, 3 projects, 4 roles, 4 achievements | `writing` -> homepage/archive/article; `project` -> existing slider; `experience` and `achievement` -> existing layouts. Optional descriptions/links that lack existing UI remain data-only. |
+| `src/content.ts` | 3 writings, 3 projects, 4 roles, 4 achievements | `writing` -> homepage/archive/article; `project` -> existing slider; `experience` and `achievement` -> existing layouts. The first safe achievement Links URL makes its title a link; other achievement links and uploaded evidence remain data-only. |
 | `src/components/ToolsSection.astro` | 18 tools, 3 rows | `tool` name, label, row, order, visibility and exactly one curated code-managed logo or uploaded image. Speeds/directions remain presentation code. |
 | `src/components/CertificatesSection.astro` | 3 certificates with Credly links and missing imagery | `certificate` title, issuer, display date, verification URL and optional real image/PDF. Missing images remain honest slots. |
 | `src/pages/index.astro` | hero, navigation, headings, contact, footer | `profile` and `siteSettings` drive existing name, expertise, biography, email, social links, navigation, sections, contact, footer labels and metadata. Section heading/order/visibility are constrained to existing layouts. |
@@ -27,6 +27,10 @@ Counts are programmatically checked by `tests/cms-inventory.test.mjs` and baseli
 | `src/main.ts`, styles and `public/` | loader, fonts, art, controls | Loader wording, timing, animation, command logic, fonts/licenses, decorative canvases and control text are protected code-managed technical presentation, not CMS fields. No new optional visible blocks. |
 
 `profile.contactCta`, `siteSettings.footerCopy`, `siteSettings.seo`, section intro, project SEO and structured career details are data-only; existing contact action uses `siteSettings.contactAction`. Some controls and missing-image labels remain code-managed. Reconcile these with the user before claiming every visible string editable. Local fonts and 18 trusted SVG logos remain code-managed; only genuine content assets should be uploaded. There are no fabricated certificate images.
+
+Project Destination URL edits the existing `repository` field. Legacy links-only records retain their original `links` and expose them in a compatibility control while no Destination URL is set; the public card prefers Destination URL over the first legacy link. Screenshots, technologies and project SEO remain stored but are hidden from normal Project editing. Order and Visible remain available under Display settings.
+
+The simplified Project editor was verified through a user-approved GUI check in the user's authenticated Chrome. The check created and published one disposable Project with `visible: false` and one uploaded image. Direct Sanity API readback matched title, description, Destination URL, order, cover reference, alt text and caption; the public homepage excluded the hidden Project. The Project and image asset were then deleted, and an exact-ID API query verified both records were absent. This required no CORS change. The local Studio connects to the existing production dataset; it is not a sandbox. Evidence is retained outside the repository under `/home/pi/.hermes/artifacts/portfolio-cms/project-gui-2481bd82/`. Push and deployment remain subject to separate approval.
 
 ## Offline baseline and migration gate
 

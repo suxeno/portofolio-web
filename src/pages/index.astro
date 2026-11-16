@@ -1,6 +1,7 @@
 ---
 import "../style.css";
 import "../section-art.css";
+import "../link-interactions.css";
 import Terminal from "../components/Terminal.vue";
 import ProjectSlider from "../components/ProjectSlider.vue";
 import EditorialSection from "../components/EditorialSection.astro";
@@ -73,10 +74,10 @@ import { latestWriting } from "../writing-order.mjs";
       {experience.map(item => <div class="entry"><div class="entry-date">{item.date}</div><h3>{item.title}</h3><p>{item.organization}</p></div>)}
     </EditorialSection>}
     {section.id === "achievements" && <EditorialSection id="achievements" lead="" emphasis={section.heading ?? "Achievements"}>
-      {achievements.map(item => <div class="entry"><p>{item}</p></div>)}
+      {achievements.map(item => <div class="entry"><p>{typeof item === 'string' ? item : <a class="achievement-link" href={item.href}>{item.title}</a>}</p></div>)}
     </EditorialSection>}
     {section.id === "certificates" && <CertificatesSection heading={section.heading} credentials={cmsCollections?.credentials} />}
-    {section.id === "contact" && <section class="contact-section" id="contact" aria-labelledby="contact-title"><div class="wrap contact-inner"><div class="contact-art"><canvas class="section-art" data-dither="contact" aria-hidden="true" width="96" height="72"></canvas></div><div><h2 id="contact-title" class="contact-invitation" tabindex="-1">{section.heading ?? settings?.contactQuestion ?? 'Building something with Data or AI?'}</h2><div class="contact-links"><a href={`mailto:${profile?.email ?? 'arvinantobahtiar@gmail.com'}`}>{settings?.contactAction ?? 'Contact me ↗'}</a>{profile ? profile.links.map(link => <a href={link.url}>{link.label} <span aria-hidden="true">↗</span></a>) : <><a href="https://www.linkedin.com/in/arvinanto/">LinkedIn <span aria-hidden="true">↗</span></a><a href="https://github.com/suxeno">GitHub <span aria-hidden="true">↗</span></a><a href="https://medium.com/@arvinantobahtiar">Medium <span aria-hidden="true">↗</span></a></>}</div></div></div>
+    {section.id === "contact" && <section class="contact-section" id="contact" aria-labelledby="contact-title"><div class="wrap contact-inner"><div class="contact-art"><canvas class="section-art" data-dither="contact" aria-hidden="true" width="96" height="72"></canvas></div><div><h2 id="contact-title" class="contact-invitation" tabindex="-1">{section.heading ?? settings?.contactQuestion ?? 'Building something with Data or AI?'}</h2><div class="contact-links"><a href={`mailto:${profile?.email ?? 'arvinantobahtiar@gmail.com'}`}>{settings?.contactAction ?? 'Contact me ↗'}</a>{profile ? profile.links.map(link => <a class="social-highlight" href={link.url}>{link.label} <span aria-hidden="true">↗</span></a>) : <><a class="social-highlight" href="https://www.linkedin.com/in/arvinanto/">LinkedIn <span aria-hidden="true">↗</span></a><a class="social-highlight" href="https://github.com/suxeno">GitHub <span aria-hidden="true">↗</span></a><a class="social-highlight" href="https://medium.com/@arvinantobahtiar">Medium <span aria-hidden="true">↗</span></a></>}</div></div></div>
     </section>}
     </>)}
   </main>

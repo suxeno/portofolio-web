@@ -14,6 +14,7 @@ test('one built workerd artifact renders upstream edits, new slugs and hidden 40
   const result = spawnSync('flock', [join(tmpdir(), 'portfolio-ssr-build.lock'), 'node_modules/.bin/astro', 'build', '--outDir', dir], {encoding:'utf8', env:{...process.env, SANITY_PROJECT_ID:'wmzxcxbs', SANITY_DATASET:'production'}, timeout:150000});
   assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
   let docs = baselineSeed();
+  docs.find(x=>x._type==='achievement').links=[{_key:'evidence',_type:'link',label:'Evidence',url:'https://example.org/evidence'}];
   let calls = 0;
   const server = join(dir,'server');
   const modules = ['entry.mjs', 'virtual_astro_middleware.mjs', ...readdirSync(join(server,'chunks')).filter(x => x.endsWith('.mjs')).map(x => `chunks/${x}`)].map(path => ({type:'ESModule',path:join(server,path)}));
@@ -28,7 +29,7 @@ test('one built workerd artifact renders upstream edits, new slugs and hidden 40
   options.workers[0].config.exports = {default:{type:'worker',cache:{enabled:false}},CachedPage:{type:'worker',cache:{enabled:true}}};
   options.workers[0].config.assets.runWorkerFirst = true;
   mf = new Miniflare(options);
-  let r = await mf.dispatchFetch('http://localhost/'); assert.equal(r.status,200,await r.clone().text()); assert.doesNotMatch(await r.text(),/Fixture changed biography/); assert.equal(calls,1);
+  let r = await mf.dispatchFetch('http://localhost/'); assert.equal(r.status,200,await r.clone().text()); const home=await r.text(); assert.doesNotMatch(home,/Fixture changed biography/); assert.match(home,/<a[^>]+href="https:\/\/example.org\/evidence"[^>]*>[^<]+<\/a>/); assert.equal(calls,1);
   docs=structuredClone(docs); docs.find(x=>x._type==='profile').biography='Fixture changed biography';
   const copy=structuredClone(docs.find(x=>x._type==='writing')); copy._id='writing--fixture-new'; copy.slug.current='fixture-new'; copy.title='Fixture new article'; docs.push(copy);
   // Miniflare does not emulate the platform entrypoint cache. Request bypass

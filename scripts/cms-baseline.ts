@@ -32,7 +32,7 @@ const toolRows:string[][][] = literal(tools,/const localRows = (\[[\s\S]*?\n\]);
 const credentials:{title:string;issuer:string;date:string;href:string}[] = literal(certs,/Astro\.props\.credentials \?\? (\[[\s\S]*?\n\]);/,'credentials');
 const nav = literal(index,/const nav = settings\?\.navigation \?\? (\[[^;]+\]);/,'navigation');
 const footer = literal(index,/const footerNav = settings\?\.footerNavigation \?\? (\[[^;]+\]);/,'footer navigation');
-const links = [...index.matchAll(/<a href="(https:\/\/[^\"]+)">(LinkedIn|GitHub|Medium) <span/g)].map(m=>({label:m[2],url:m[1]}));
+const links = [...index.matchAll(/<a class="social-highlight" href="(https:\/\/[^\"]+)">(LinkedIn|GitHub|Medium) <span/g)].map(m=>({label:m[2],url:m[1]}));
 if (links.length !== 3 || toolRows.length !== 3 || toolRows.flat().length !== localLogoIds.length || toolRows.flat().some((row,i)=>row[1]!==localLogoIds[i])) throw new Error('Baseline link or curated logo inventory changed');
 const sectionIds = ['writing','projects','tools','experience','achievements','certificates','contact'];
 const sections = sectionIds.map((id,order)=> {

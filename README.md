@@ -8,7 +8,7 @@ Portfolio for Arvinanto Bahtiar. [Live site](https://portofolio.arvinantobahtiar
 - **Motion:** GSAP 3.15.1 + ScrollTrigger; Canvas 2D for one-bit artwork. No p5.js or Three.js.
 - **Language:** TypeScript 6.0.3; ESM.
 - **Toolchain:** Bun 1.4.4; Node.js ≥22.23.4; exact dependencies in `bun.lock`.
-- **Testing:** Node test runner + Playwright Core 1.65.0 + Chromium.
+- **Testing:** Node test runner + Playwright Core 1.65.0 + Chromium; the normal test command caps parallel workers at two to bound fixture-build contention.
 - **Hosting:** Cloudflare Worker `portofolio`; the lockfile resolves Wrangler 4.162.0 for the generated Worker and client assets.
 - **Fonts:** self-hosted JetBrains Mono Regular and Silkscreen Bold 700; OFL licenses included.
 - **Content:** Explicit unconfigured mode uses local records. The deployed SSR Worker reads and validates published public Sanity data, with a 60-second shared edge cache for eligible responses. Sanity CDN may add propagation delay. Terminal commands never execute a real shell.
@@ -39,6 +39,7 @@ Portfolio for Arvinanto Bahtiar. [Live site](https://portofolio.arvinantobahtiar
 │   ├── section-art.ts              # Canvas drawing, loops and motion controls
 │   ├── section-art.css             # Artwork and section compositions
 │   ├── style.css                   # Base styles, fonts and design tokens
+│   ├── link-interactions.css       # Link sweeps and motion-aware entry hover
 │   ├── writing-order.mjs           # Date ordering and three-entry preview selector
 │   └── writing-order.d.mts         # Selector TypeScript declarations
 ├── public/fonts/                   # Font binaries and license files
@@ -100,7 +101,8 @@ bun run check:deploy   # Validate sealed artifact and dry run; does NOT publish
 - Intro: four seconds on landing loads/reloads; skippable. Articles, return navigation and reduced-motion mode skip it.
 - Compact headers use a modal navigation drawer when JavaScript is available; ordinary header links remain available without it.
 - Artwork: visible loops capped at eight updates/second; ARVIN button pauses/resumes. Reduced motion is static; offscreen/hidden artwork suspends.
-- Projects use manual controls, keyboard navigation and native touch scrolling. Sample writing and dummy project images remain explicitly labeled.
+- Projects use manual controls, keyboard navigation and native touch scrolling. Studio edits Title, Description, Destination URL and Cover with alt text; Order and Visible are under Display settings. Existing legacy links remain supported; unused stored fields are preserved, not deleted. Sample writing and dummy project images remain explicitly labeled.
+- Achievement titles link to the first safe CMS Links URL when supplied; otherwise they remain plain text. Uploaded evidence files do not automatically become link destinations. Achievement and Contact social links use a white sweep; footer navigation and project titles use faint resting underlines with full-color hover/focus sweeps. Homepage Writing and Experience entries scale subtly on hover, respecting pause and reduced motion.
 - Tools use three alternating CSS marquee rows; reduced motion and no JavaScript show a static icon-and-label list. Clicking toggles pause for that row only; hovering does not pause. The ARVIN control pauses all motion.
 - Local fallback tool and credential records live in their section components. Baseline certificates have honest missing-image slots; authentic Sanity assets can be supplied with appropriate alt text.
 

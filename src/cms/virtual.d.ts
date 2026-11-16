@@ -13,7 +13,7 @@ declare module 'virtual:cms-site' {
   export default site;
 }
 declare module 'virtual:cms-career' {
-  const career: {experience: import('../content').Job[]; achievements: string[]} | null;
+  const career: {experience: import('../content').Job[]; achievements: (string | {title: string; href: string})[]} | null;
   export default career;
 }
 declare module 'virtual:cms-collections' {

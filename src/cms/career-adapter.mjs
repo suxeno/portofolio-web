@@ -1,5 +1,5 @@
 // Server-only projection to the existing career and achievement layouts.
-import {validDateRange, validYearMonth} from './schema.mjs';
+import {safeLink, validDateRange, validYearMonth} from './schema.mjs';
 
 function text(value, name, max = 400) {
   if (typeof value !== 'string' || !value.trim() || value.length > max) throw new Error(`Invalid ${name}`);
@@ -19,7 +19,9 @@ export function adaptCareer(records) {
   });
   const achievements = select('achievement').map(({record}) => {
     if (validYearMonth(record.date) !== true) throw new Error('Invalid achievement date');
-    return text(record.title, 'achievement statement', 1000);
+    const title = text(record.title, 'achievement statement', 1000);
+    const href = Array.isArray(record.links) ? record.links[0]?.url : undefined;
+    return safeLink(href) === true ? {title, href} : title;
   });
   return {experience, achievements};
 }

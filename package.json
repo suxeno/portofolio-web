@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "astro dev",
     "typecheck": "astro check && vue-tsc --noEmit",
-    "test": "bun run build && node --test tests/*.test.mjs",
+    "test": "bun run build && node --test --test-concurrency=2 tests/*.test.mjs",
     "build": "astro build",
     "check:deploy": "node scripts/validate-ssr-artifact.mjs && wrangler deploy --config dist/server/wrangler.json --dry-run",
     "deploy:tested": "node scripts/validate-ssr-artifact.mjs && wrangler deploy --config dist/server/wrangler.json"
