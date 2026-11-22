@@ -52,7 +52,7 @@ test('homepage revision uses faint link baselines and motion-aware writing rows'
   browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',args:['--no-sandbox','--disable-gpu']});
   const page=await browser.newPage({viewport:{width:1280,height:900}}); await page.goto(fixture.url);
   const skip=page.getByRole('button',{name:'Skip intro'}); if(await skip.isVisible()) await skip.click();
-  for(const selector of ['#projects .project-card a','footer nav a']) {
+  for(const selector of ['footer nav a']) {
    const link=page.locator(selector).first(); await link.scrollIntoViewIfNeeded();
    assert.match(await link.evaluate(e=>getComputedStyle(e).textDecorationColor), /(?:0\.25|0\.250)/, selector);
    if(selector==='footer nav a') assert.notEqual(await link.evaluate(e=>getComputedStyle(e).backgroundPositionY),'100%', 'footer sweep must follow text rather than the bottom of the 44px touch target');

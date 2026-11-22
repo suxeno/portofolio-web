@@ -322,11 +322,14 @@ test('mobile writing and achievement artwork leads its heading in normal flow', 
  }
 });
 
-test('project descriptions use the full card width', async () => {
+test('project descriptions use the full width inside the card border', async () => {
  for (const width of [390, 1440]) {
   const page = await browser.newPage({viewport:{width,height:900},reducedMotion:'reduce'}); await page.goto(url);
-  const sizes = await page.locator('.project-card').first().evaluate(card => ({card:card.getBoundingClientRect().width, text:card.querySelector('p').getBoundingClientRect().width}));
-  assert.ok(Math.abs(sizes.card - sizes.text) < 1, JSON.stringify({width,...sizes}));
+  const sizes = await page.locator('.project-card').first().evaluate(card => {
+   const style = getComputedStyle(card), outer = card.getBoundingClientRect(), text = card.querySelector('p').getBoundingClientRect();
+   return {left:outer.left+parseFloat(style.borderLeftWidth), right:outer.right-parseFloat(style.borderRightWidth), textLeft:text.left, textRight:text.right};
+  });
+  assert.ok(Math.abs(sizes.left - sizes.textLeft) < 1 && Math.abs(sizes.right - sizes.textRight) < 1, JSON.stringify({width,...sizes}));
   assert.ok(['left', 'start'].includes(await page.locator('.project-card p').first().evaluate(el => getComputedStyle(el).textAlign)));
   assert.ok(await page.locator('.project-slider').evaluate(el => parseFloat(getComputedStyle(el).columnGap)) > 24);
   await page.close();

@@ -34,7 +34,7 @@
 :is(.writing-more a, #certificates .document-copy a, footer > a):is(:hover,:focus-visible) { text-decoration: none; }
 :is(.writing-more a, #certificates .document-copy a, footer > a):is(:hover,:focus-visible)::after { transform: scaleX(1); }
 /* A faint native underline wraps naturally; the foreground sweep is per line. */
-:is(#projects .project-card a, footer nav a) {
+footer nav a {
   text-decoration: underline;
   text-decoration-color: color-mix(in srgb, currentColor 25%, transparent);
   background: linear-gradient(currentColor, currentColor) left bottom / 0 1px no-repeat;
@@ -43,18 +43,18 @@
   transition: background-size 250ms ease-out;
 }
 /* Footer anchors have a tall touch target; align the sweep with its text. */
-:is(#projects .project-card a, footer nav a):is(footer nav a) { background-position: left calc(50% + .8em); }
-:is(#projects .project-card a, footer nav a):is(:hover, :focus-visible) { background-size: 100% 1px; }
+footer nav a:is(footer nav a) { background-position: left calc(50% + .8em); }
+footer nav a:is(:hover, :focus-visible) { background-size: 100% 1px; }
 #writing .writing-link:hover strong { text-decoration: none; }
 @media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
   :is(#experience, #writing) .entry { transition: scale 250ms ease-out; transform-origin: center; }
   /* GSAP writes an inline scale reset; this independent scale must override it. */
   body:not(.title-paused) :is(#experience, #writing) .entry:hover { scale: 1.02 !important; }
 }
-.title-paused :is(#projects .project-card a, footer nav a) { transition: none; }
+.title-paused footer nav a { transition: none; }
 .title-paused .social-highlight, .title-paused .hero .terminal-list a { transition: none; }
 .title-paused :is(.writing-more a, #certificates .document-copy a, footer > a)::after { transition: none; }
 @media (prefers-reduced-motion: reduce) {
-  .social-highlight, .hero .terminal-list a, :is(#projects .project-card a, footer nav a) { transition: none; }
+  .social-highlight, .hero .terminal-list a, footer nav a { transition: none; }
   :is(.writing-more a, #certificates .document-copy a, footer > a)::after { transition: none; }
 }

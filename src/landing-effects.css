@@ -21,21 +21,21 @@
 @media(max-width:600px) { .hero-dots { width:min(100%,360px); } }
 .pointer-trail { position:fixed; inset:0; width:100%; height:100%; pointer-events:none; z-index:2; }
 
-.achievement-link { color:inherit; text-decoration:none; overflow-wrap:anywhere; }
-.achievement-title {
+.achievement-link, .project-link { color:inherit; text-decoration:none; overflow-wrap:anywhere; }
+.achievement-title, .project-title {
   padding-bottom:3px;
   background:linear-gradient(currentColor,currentColor) left bottom / 0 1px no-repeat;
   box-decoration-break:clone;
   transition:background-size 230ms ease-out;
 }
-.achievement-arrow {
+.achievement-arrow, .project-arrow {
   display:inline-block; margin-inline-start:.45em; opacity:0; transform:translate(-4px,2px);
   transition:opacity 140ms ease-out,transform 180ms ease-out;
 }
-.achievement-link:is(:hover,:focus-visible) .achievement-title { background-size:100% 1px; }
-.achievement-link:is(:hover,:focus-visible) .achievement-arrow { opacity:1; transform:none; transition-delay:200ms; }
-@media (hover:none) { .achievement-arrow { opacity:1; transform:none; } }
-.title-paused :is(.nav-label,.achievement-title,.achievement-arrow) { transition:none; }
+.achievement-link:is(:hover,:focus-visible) .achievement-title, .project-link:is(:hover,:focus-visible) .project-title { background-size:100% 1px; }
+.achievement-link:is(:hover,:focus-visible) .achievement-arrow, .project-link:is(:hover,:focus-visible) .project-arrow { opacity:1; transform:none; transition-delay:200ms; }
+@media (hover:none) { .achievement-arrow, .project-arrow { opacity:1; transform:none; } }
+.title-paused :is(.nav-label,.achievement-title,.achievement-arrow,.project-title,.project-arrow) { transition:none; }
 
 #writing .writing-link {
   grid-template-columns:minmax(0,1fr) auto;
