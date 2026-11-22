@@ -26,7 +26,7 @@ Portfolio for Arvinanto Bahtiar. [Live site](https://portofolio.arvinantobahtiar
 │   ├── components/
 │   │   ├── EditorialSection.astro   # Section heading and artwork shell
 │   │   ├── ToolsSection.astro       # Three-row marquee and static logo list
-│   │   ├── CertificatesSection.astro # Uniform certificate frames and source links
+│   │   ├── CertificatesSection.astro # Equal-size cards, pixel wipe and source links
 │   │   ├── Terminal.vue            # Command input, output and keyboard handling
 │   │   └── ProjectSlider.vue       # Manual project carousel
 │   ├── cms/                        # Sanity schemas, validation and runtime adapters
@@ -34,6 +34,8 @@ Portfolio for Arvinanto Bahtiar. [Live site](https://portofolio.arvinantobahtiar
 │   ├── content.ts                  # Local fallback writing, projects and career records
 │   ├── shell.ts                    # Safe local command/path parser
 │   ├── main.ts                     # Landing intro and navigation lifecycle
+│   ├── landing-effects.ts           # Hero GIF playback and outline pointer wake
+│   ├── landing-effects.css          # Responsive hero and landing link effects
 │   ├── mobile-nav.ts               # Compact modal navigation lifecycle
 │   ├── motion.ts                   # GSAP section choreography
 │   ├── section-art.ts              # Canvas drawing, loops and motion controls
@@ -42,6 +44,7 @@ Portfolio for Arvinanto Bahtiar. [Live site](https://portofolio.arvinantobahtiar
 │   ├── link-interactions.css       # Link sweeps and motion-aware entry hover
 │   ├── writing-order.mjs           # Date ordering and three-entry preview selector
 │   └── writing-order.d.mts         # Selector TypeScript declarations
+├── public/art/                     # Self-hosted walking-dots GIF and still
 ├── public/fonts/                   # Font binaries and license files
 ├── public/logos/                   # Self-hosted monochrome tool logos
 ├── tests/
@@ -52,7 +55,8 @@ Portfolio for Arvinanto Bahtiar. [Live site](https://portofolio.arvinantobahtiar
 │   ├── portfolio.test.mjs           # Browser layout, interactions and motion
 │   ├── shell.test.mjs               # Command parser unit tests
 │   ├── tools-section.test.mjs       # Tool markup and motion fallback checks
-│   ├── certificates-section.test.mjs # Credential records and image-ready markup
+│   ├── certificates-section.test.mjs # Card geometry, original colors and links
+│   ├── portfolio-revisit.test.mjs   # Landing motion and responsive regressions
 │   ├── writing-revision.test.mjs    # Preview cap and archive runtime fixtures
 │   └── capture.mjs                 # Local preview screenshot utility
 ├── docs/
@@ -98,17 +102,18 @@ bun run check:deploy   # Validate sealed artifact and dry run; does NOT publish
 - Studio dependencies are pinned in `package.json`: `@sanity/astro`, `sanity`, React, React DOM and `@astrojs/react`. Vue remains in use for public islands.
 - Writing fields: `title`, `slug`, `excerpt`, `cover`, `publishedAt`, `body`. Use unique URL-safe slugs; leave unpublished dates `null`.
 - Routes: `/` → portfolio; `/writing/` → archive; `/writing/<slug>/` → article. Homepage shows at most three recent entries; dated entries sort newest first, undated drafts retain source order.
-- Intro: four seconds on landing loads/reloads; skippable. Articles, return navigation and reduced-motion mode skip it.
+- Intro: three seconds on landing loads/reloads, with no visible Skip control. Escape, article-return navigation and reduced-motion mode still bypass it.
+- Landing motion: self-hosted monochrome GIF with a still fallback; regenerate the assets with `python3 scripts/render-walking-dots.py` (Pillow). The fading outline trail is mouse-only on fine-pointer devices. The ARVIN control and reduced motion disable the trail and show the still.
 - Compact headers use a modal navigation drawer when JavaScript is available; ordinary header links remain available without it.
 - Artwork: visible loops capped at eight updates/second; ARVIN button pauses/resumes. Reduced motion is static; offscreen/hidden artwork suspends.
 - Projects use manual controls, keyboard navigation and native touch scrolling. Studio edits Title, Description, Destination URL and Cover with alt text; Order and Visible are under Display settings. Existing legacy links remain supported; unused stored fields are preserved, not deleted. Sample writing and dummy project images remain explicitly labeled.
-- Achievement titles link to the first safe CMS Links URL when supplied; otherwise they remain plain text. Uploaded evidence files do not automatically become link destinations. Achievement and Contact social links use a white sweep; footer navigation and project titles use faint resting underlines with full-color hover/focus sweeps. Homepage Writing and Experience entries scale subtly on hover, respecting pause and reduced motion.
+- Achievement titles link to the first configured destination URL; otherwise they remain plain text. Linked titles get an underline followed by a link arrow. Contact social links retain their white sweep. Header and drawer navigation use plain slash prefixes and animated underlines. Homepage writing rows scale without clipping and omit sample badges; the archive and articles still identify sample drafts.
 - Tools use three alternating CSS marquee rows; reduced motion and no JavaScript show a static icon-and-label list. Clicking toggles pause for that row only; hovering does not pause. The ARVIN control pauses all motion.
-- Local fallback tool and credential records live in their section components. Baseline certificates have honest missing-image slots; authentic Sanity assets can be supplied with appropriate alt text. Certificate links use the generic “View evidence” label without changing their configured destinations.
+- Local fallback tool and credential records live in their section components. Certificate cards stay equal in size without truncating captions. A stepped wipe reverses the frame and caption, not the image. Supply authentic assets with alt text in Sanity; missing images have an explicit placeholder. “View evidence” keeps the configured destination.
 
 ## Deployment
 
-- CI runs baseline tests with Sanity variables explicitly empty, then makes a separate sealed production SSR build with the public `wmzxcxbs` / `production` identifiers pinned in the workflow, validates the generated `dist/server/wrangler.json` and deploys that same output on main push/manual dispatch. The seal detects changes to output; it is not a signature. Further push or deploy requires separate approval. Partial configuration fails; CMS dispatch requires both. With neither variable ordinary builds use local content.
+- CI runs baseline tests with Sanity variables explicitly empty, then makes a separate sealed production SSR build using the public Sanity project and dataset pinned in the workflow. It validates the generated `dist/server/wrangler.json` and deploys that same output on approved pushes to `main` or manual dispatch. The seal detects changes to output; it is not a signature. Partial Sanity configuration fails; ordinary builds with neither variable use local content.
 - Pull requests run checks only. Deployment requires repository secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. The legacy signed rebuild-webhook Worker and its secrets are inactive and not needed for SSR; see `workers/cms-publish/README.md`.
 - Local development, build, preview and dry-run commands do not deploy. Never commit credentials.
 - Platform cache is tested separately from the local suite: `python3 scripts/cms-live-cache-probe.py EXPECTED_ACTIVE_VERSION_ID` checks the active production version and takes at least 65 seconds. It uses the existing `/writing/data-systems/` article and fails if that article is removed; update the probe to an existing canonical article if needed. `X-Portfolio-Render` is a public random identifier per inner render, not a secret or visitor identifier.

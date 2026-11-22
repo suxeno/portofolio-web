@@ -25,7 +25,7 @@
 .section-art { width:100%; max-width:240px; margin:0; opacity:.65; }
 .editorial::after { content:""; display:block; clear:both; }
 #writing .art-column { float:left; width:19%; margin:0 5% 20px 0; }
-#writing > div:last-child { overflow:hidden; }
+#writing > div:last-child { display:flow-root; }
 #projects .art-column { width:130px; margin-top:-35px; }
 #experience .art-column { float:right; width:18%; margin-top:20px; }
 #experience .entry { grid-template-columns:minmax(130px, .7fr) minmax(0, 1.6fr) minmax(130px, 1fr); }
@@ -41,7 +41,7 @@ footer.wrap { display:flex; gap:12px 32px; align-items:center; }
 footer p { flex-basis:100%; margin:0; }
 @media(max-width:700px) {
  .art-column,.art-column:first-child,#writing .art-column,#experience .art-column,#achievements .art-column,#projects .art-column { float:right; width:96px; margin:0 0 16px 16px; }
- #writing > div:last-child { overflow:visible; }
+
  #writing .entry:first-of-type { clear:both; }
  #experience .entry { grid-template-columns:1fr; }
  #achievements .entry { clear:both; }

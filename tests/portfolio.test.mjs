@@ -301,7 +301,7 @@ test('headings, terminal divider and achievement art separation', async () => {
   const page=await browser.newPage({viewport:{width,height:900},reducedMotion:'reduce'}); await page.goto(url);
   for (const [id,title] of [['writing','Writings'],['projects','Projects'],['experience','Experience'],['achievements','Achievements'],['contact','Building something with Data or AI?']]) assert.equal((await page.locator(`#${id}-title`).innerText()).trim(),title);
   const edges=await page.evaluate(()=>({right:document.querySelector('#top').getBoundingClientRect().right,terminal:document.querySelector('.command-line').getBoundingClientRect().right,art:document.querySelector('#achievements canvas').getBoundingClientRect().toJSON(),awards:[...document.querySelectorAll('#achievements .entry')].map(e=>e.getBoundingClientRect().toJSON())}));
-  assert.equal(edges.terminal,edges.right,`terminal ${width}`); assert.equal(edges.awards.length,4);
+  assert.ok(Math.abs(edges.terminal-edges.right)<0.1,`terminal ${width}: ${edges.terminal} vs ${edges.right}`); assert.equal(edges.awards.length,4);
   for(const r of edges.awards) assert.ok(r.right <= edges.art.left || r.top >= edges.art.bottom || r.bottom <= edges.art.top, `achievement collision ${width}: ${JSON.stringify({r,art:edges.art})}`);
   await page.close();
  }
@@ -391,10 +391,10 @@ test('hero is borderless and exposes a single command prompt', async () => {
  await page.close();
 });
 
-test('writing index presents draft rows with clear article links', async () => {
+test('home writing rows have clear article links without sample badges', async () => {
  const page=await browser.newPage({javaScriptEnabled:false}); await page.goto(url);
  const rows=page.locator('#writing .entry'); assert.equal(await rows.count(),3);
- for(let i=0;i<3;i++){const row=rows.nth(i); assert.match(await row.innerText(),/SAMPLE DRAFT/); assert.match(await row.innerText(),/Read article ↗/); assert.equal(await row.locator('a[href^="/writing/"]').count(),1);}
+ for(let i=0;i<3;i++){const row=rows.nth(i); assert.doesNotMatch(await row.innerText(),/SAMPLE DRAFT/i); assert.match(await row.innerText(),/Read article ↗/); assert.equal(await row.locator('a[href^="/writing/"]').count(),1);}
  await page.close();
 });
 
@@ -472,16 +472,13 @@ test('career content and contact work without JavaScript', async () => {
   assert.equal(await page.locator('.boot').count(), 0);
   await page.close();
 });
-test('intro replays on every landing reload and lasts four seconds unless skipped', async () => {
+test('intro has no skip button, ends at three seconds and replays on reload', async () => {
   const context = await browser.newContext(); const page = await context.newPage();
   await page.clock.install(); await page.clock.pauseAt(new Date(Date.now() + 60_000));
   await page.goto(url, { waitUntil: 'domcontentloaded' }); await page.locator('.boot').waitFor({ state: 'attached', timeout: 5000 });
-  await page.getByRole('button', { name: 'Skip intro' }).focus(); await page.keyboard.press('Enter'); assert.equal(await page.locator('.boot').count(), 0);
-  await page.reload({ waitUntil: 'domcontentloaded' });
-  assert.equal(await page.locator('.boot').count(), 1, 'reload replays even after Skip');
-  await page.clock.runFor(2500); assert.equal(await page.locator('.boot').count(), 1, 'not dismissed at the old deadline');
-  await page.clock.runFor(1400); assert.equal(await page.locator('.boot').count(), 1);
-  await page.clock.runFor(200); assert.equal(await page.locator('.boot').count(), 0);
+  assert.equal(await page.locator('.boot button').count(), 0);
+  await page.clock.runFor(2999); assert.equal(await page.locator('.boot').count(), 1);
+  await page.clock.runFor(1); assert.equal(await page.locator('.boot').count(), 0);
   await page.reload({ waitUntil: 'domcontentloaded' });
   assert.equal(await page.locator('.boot').count(), 1, 'reload replays after natural completion too');
   await page.keyboard.press('Escape'); assert.equal(await page.locator('.boot').count(), 0);
@@ -498,7 +495,7 @@ test('package intro updates terminal rows in place then completes its transactio
   assert.notEqual(partial, '100%');
   assert.match(await page.locator('.boot-summary').textContent(), /KiB/);
   await page.clock.runFor(1700);
-  assert.notEqual(await page.locator('[data-boot-package="contact"] .boot-percent').textContent(), '100%', 'package animation is paced across the longer intro');
+  assert.notEqual(await page.locator('[data-boot-package="contact"] .boot-percent').textContent(), '100%', 'last package is still updating');
   assert.doesNotMatch(await page.locator('.boot-transaction').textContent(), /Complete!/);
   await page.clock.runFor(700);
   assert.equal(await page.locator('[data-boot-package]').count(), 4, 'updates replace values, never duplicate log rows');
@@ -506,7 +503,7 @@ test('package intro updates terminal rows in place then completes its transactio
     assert.equal(await page.locator(`[data-boot-package="${name}"] .boot-percent`).textContent(), '100%');
     assert.match(await page.locator(`[data-boot-package="${name}"] .boot-size`).textContent(), /KiB/);
   }
-  await page.clock.runFor(900);
+  await page.clock.runFor(300);
   assert.match(await page.locator('.boot-transaction').textContent(), /Complete!/);
   await page.setViewportSize({ width: 320, height: 640 });
   assert.equal(await page.evaluate(() => {

@@ -49,7 +49,7 @@ export function adaptSite(records, config = {}) {
   });
   const writingUi = {};
   for (const key of ['archiveTitle','backToPortfolio','backToWritings','sampleDraft','dummyCover','readArticle','seeAllWritings','titleSuffix']) writingUi[key] = text(s.writingUi?.[key], `writingUi.${key}`);
-  if (s.writingUi?.sampleDraftHome != null && s.writingUi.sampleDraftHome !== '') writingUi.sampleDraftHome = text(s.writingUi.sampleDraftHome, 'writingUi.sampleDraftHome');
+
   if (validEmail(p.email) !== true) throw new Error('Invalid profile email');
   const title = text(s.title,'site title'), description = text(s.description,'site description');
   if (title.length > 200 || description.length > 500) throw new Error('Invalid site SEO length');

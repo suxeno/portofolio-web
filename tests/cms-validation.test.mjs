@@ -44,5 +44,6 @@ test('rendered site and profile strings are required in Studio with build-compat
     assert.ok(calls.some(([kind])=>kind==='required'),`${type}.${name} required`);
   }
   const ui=schemaTypes.find(d=>d.name==='siteSettings').fields.find(f=>f.name==='writingUi');
-  for (const f of ui.fields) assert.equal(typeof f.validation,'function',`writingUi.${f.name}`);
+  for (const f of ui.fields.filter(field=>!field.hidden)) assert.equal(typeof f.validation,'function',`writingUi.${f.name}`);
+  assert.equal(ui.fields.find(field=>field.name==='sampleDraftHome')?.hidden,true);
 });

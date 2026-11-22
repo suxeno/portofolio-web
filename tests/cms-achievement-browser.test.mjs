@@ -23,36 +23,37 @@ test('synthetic CMS achievement links wrap and support focus and reduced motion'
    assert.equal(await page.locator('#achievements .entry').count(),4);
    assert.equal(await page.locator('#achievements .entry').nth(1).locator('a').count(),0);
    assert.equal(await page.locator('#contact .social-highlight').count(),docs.find(x=>x._type==='profile').links.length);
+   const title=link.locator('.achievement-title');
+   const arrow=link.locator('.achievement-arrow');
    await link.scrollIntoViewIfNeeded(); assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
-   // Freeze the browser animation timeline before hover; pausing only after
-   // hover can miss the entire transition when the test runner is busy.
+   assert.equal(await title.evaluate(e=>getComputedStyle(e).backgroundSize),'0px 1px');
+   assert.equal(await arrow.evaluate(e=>getComputedStyle(e).opacity),'0');
    const cdp=await page.context().newCDPSession(page);
    await cdp.send('Animation.enable');
    await cdp.send('Animation.setPlaybackRate',{playbackRate:0});
-   await link.hover();
-   await link.evaluate(e=>{
-    const animation=e.getAnimations().find(a=>a.transitionProperty==='--link-sweep');
-    if (!animation) throw new Error('Expected active highlight transition');
+   // Hover the first text fragment (the bounding-box center can be outside a wrapped inline link).
+   const point=await title.evaluate(e=>{const r=e.getClientRects()[0]; return {x:r.left+10,y:r.top+r.height/2};});
+   await page.mouse.move(point.x,point.y);
+   await title.evaluate(e=>{
+    const animation=e.getAnimations().find(a=>a.transitionProperty==='background-size');
+    if (!animation) throw new Error('Expected active underline transition');
     animation.pause(); animation.currentTime=100;
    });
-   const partial=parseFloat(await link.evaluate(e=>getComputedStyle(e).getPropertyValue('--link-sweep')));
+   const partial=parseFloat(await title.evaluate(e=>getComputedStyle(e).backgroundSize));
    assert.ok(partial>0 && partial<100, `mid-transition: ${partial}`);
-   const midStyle=await link.evaluate(e=>({background:getComputedStyle(e).backgroundImage, clip:getComputedStyle(e).backgroundClip, fill:getComputedStyle(e).webkitTextFillColor}));
-   // Both gradients share the same stop: dark glyphs over the white fill,
-   // and light glyphs over the unfilled background throughout the sweep.
-   assert.match(midStyle.background, /rgb\(23, 23, 23\).*rgb\(245, 245, 240\).*rgb\(255, 255, 255\).*rgba\(0, 0, 0, 0\)/);
-   assert.equal(midStyle.clip, 'text, padding-box');
-   assert.equal(midStyle.fill, 'rgba(0, 0, 0, 0)');
+   assert.equal(await arrow.evaluate(e=>getComputedStyle(e).opacity),'0');
    if(width===1280) await link.screenshot({path:`${dir}/achievement-1280-mid-sweep.png`});
-   await link.evaluate(e=>e.getAnimations().forEach(animation=>animation.finish()));
-   assert.equal(await link.evaluate(e=>getComputedStyle(e).getPropertyValue('--link-sweep').trim()),'100%');
+   await cdp.send('Animation.setPlaybackRate',{playbackRate:1});
+   await link.evaluate(e=>e.getAnimations({subtree:true}).forEach(animation=>animation.finish()));
+   assert.equal(await title.evaluate(e=>getComputedStyle(e).backgroundSize),'100% 1px');
+   assert.equal(await arrow.evaluate(e=>getComputedStyle(e).opacity),'1');
    await page.locator('#achievements').screenshot({path:`${dir}/achievement-${width}-hover.png`});
    await page.mouse.move(0,0); await page.keyboard.press('Tab'); await link.focus();
-   await page.emulateMedia({reducedMotion:'reduce'}); await page.evaluate(()=>document.documentElement.classList.add('keyboard-test'));
+   await page.emulateMedia({reducedMotion:'reduce'});
    await page.keyboard.press('Tab'); await page.keyboard.press('Shift+Tab');
    assert.equal(await link.evaluate(e=>e.matches(':focus-visible')),true);
-   assert.equal(await link.evaluate(e=>getComputedStyle(e).getPropertyValue('--link-sweep').trim()),'100%');
-   assert.equal(await link.evaluate(e=>getComputedStyle(e).transitionDuration),'0s');
+   assert.equal(await title.evaluate(e=>getComputedStyle(e).backgroundSize),'100% 1px');
+   assert.equal(await arrow.evaluate(e=>getComputedStyle(e).transitionDuration),'0s');
    await page.locator('#achievements').screenshot({path:`${dir}/achievement-${width}-focus-reduced.png`});
    await page.close();
   }

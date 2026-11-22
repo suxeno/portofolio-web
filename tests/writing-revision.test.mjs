@@ -24,7 +24,7 @@ test('five source records generate only three home rows and five reachable archi
     fixture = await createSsrFixture({root: project});
     const home = await fixture.html('/');
     const archive = await fixture.html('/writing/');
-    assert.equal((home.match(/class="writing-link"/g)||[]).length,3);
+    assert.equal((home.match(/<a\b[^>]*\bclass="writing-link(?:\s[^"]*)?"/g)||[]).length,3);
     assert.ok(home.includes('Fixture Five') && home.includes('Fixture Four'));
     assert.ok(home.indexOf('Fixture Five') < home.indexOf('Fixture Four'));
     for (const [slug, title, text] of [

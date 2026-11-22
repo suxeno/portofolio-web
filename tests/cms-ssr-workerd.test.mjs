@@ -29,7 +29,7 @@ test('one built workerd artifact renders upstream edits, new slugs and hidden 40
   options.workers[0].config.exports = {default:{type:'worker',cache:{enabled:false}},CachedPage:{type:'worker',cache:{enabled:true}}};
   options.workers[0].config.assets.runWorkerFirst = true;
   mf = new Miniflare(options);
-  let r = await mf.dispatchFetch('http://localhost/'); assert.equal(r.status,200,await r.clone().text()); const home=await r.text(); assert.doesNotMatch(home,/Fixture changed biography/); assert.match(home,/<a[^>]+href="https:\/\/example.org\/evidence"[^>]*>[^<]+<\/a>/); assert.equal(calls,1);
+  let r = await mf.dispatchFetch('http://localhost/'); assert.equal(r.status,200,await r.clone().text()); const home=await r.text(); assert.doesNotMatch(home,/Fixture changed biography/); assert.match(home,/<a[^>]+href="https:\/\/example.org\/evidence"[^>]*><span class="achievement-title">[^<]+<\/span><span class="achievement-arrow" aria-hidden="true">↗<\/span><\/a>/); assert.equal(calls,1);
   docs=structuredClone(docs); docs.find(x=>x._type==='profile').biography='Fixture changed biography';
   const copy=structuredClone(docs.find(x=>x._type==='writing')); copy._id='writing--fixture-new'; copy.slug.current='fixture-new'; copy.title='Fixture new article'; docs.push(copy);
   // Miniflare does not emulate the platform entrypoint cache. Request bypass

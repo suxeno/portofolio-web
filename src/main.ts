@@ -15,7 +15,7 @@ function startIntro(): void {
   const overlay = document.createElement('div');
   overlay.className = 'boot';
   overlay.setAttribute('aria-label', 'Profile introduction');
-  overlay.innerHTML = `<div class="boot-inner"><div class="boot-header"><span>ARVIN / PROFILE</span><button type="button">Skip intro <span aria-hidden="true">↗</span></button></div><div class="boot-body"><p class="boot-caption">LOADING PROFILE MODULES</p><div class="boot-glyph">Arvin</div><p class="boot-name">arvin profile</p><div class="boot-packages" aria-hidden="true"><p class="boot-summary"></p><div class="boot-table"></div><div class="boot-total"></div><div class="boot-transaction"></div></div></div></div>`;
+  overlay.innerHTML = `<div class="boot-inner"><div class="boot-header"><span>ARVIN / PROFILE</span></div><div class="boot-body"><p class="boot-caption">LOADING PROFILE MODULES</p><div class="boot-glyph">Arvin</div><p class="boot-name">arvin profile</p><div class="boot-packages" aria-hidden="true"><p class="boot-summary"></p><div class="boot-table"></div><div class="boot-total"></div><div class="boot-transaction"></div></div></div></div>`;
   document.body.append(overlay);
   let timer: number;
   let interval: number | undefined;
@@ -63,8 +63,8 @@ function startIntro(): void {
       '[3/3] Loading arvin-profile      100%',
       'Complete!',
     ];
-    const transactionStart = downloadDuration + 200;
-    const count = elapsed < transactionStart ? 0 : Math.min(steps.length, Math.floor((elapsed - transactionStart) / 200) + 1);
+    const transactionStart = downloadDuration + 40;
+    const count = elapsed < transactionStart ? 0 : Math.min(steps.length, Math.floor((elapsed - transactionStart) / 100) + 1);
     transaction.textContent = steps.slice(0, count).join('\n');
     if (count === steps.length) clearInterval(interval);
   }
@@ -72,11 +72,11 @@ function startIntro(): void {
   interval = window.setInterval(renderPackages, 40);
   const onKey = (event: KeyboardEvent) => { if (event.key === 'Escape') dismiss(); };
   const onAnchor = (event: MouseEvent) => { if (event.target instanceof Element && event.target.closest('a')) dismiss(); };
-  overlay.querySelector('button')?.addEventListener('click', dismiss);
+
   window.addEventListener('keydown', onKey);
   window.addEventListener('pagehide', dismiss);
 
   document.addEventListener('click', onAnchor);
-  timer = window.setTimeout(dismiss, 4000);
+  timer = window.setTimeout(dismiss, 3000);
 }
 startIntro();

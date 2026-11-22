@@ -2,6 +2,7 @@
 import "../style.css";
 import "../section-art.css";
 import "../link-interactions.css";
+import "../landing-effects.css";
 import Terminal from "../components/Terminal.vue";
 import ProjectSlider from "../components/ProjectSlider.vue";
 import EditorialSection from "../components/EditorialSection.astro";
@@ -40,29 +41,34 @@ import { latestWriting } from "../writing-order.mjs";
   <a class="skip-link" href="#main">Skip to content</a>
   <header class="site-header wrap">
     <a class="wordmark" href="#top">{settings?.wordmark ?? 'ARVIN / PROFILE'}</a>
-    <nav aria-label="Main navigation">{nav.map(link => <a href={link.url}>{link.label}</a>)}</nav>
+    <nav aria-label="Main navigation">{nav.map(link => <a href={link.url}><span class="nav-prefix" aria-hidden="true"></span><span class="nav-label">{link.label}</span></a>)}</nav>
     <button class="menu-trigger" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu" hidden><span aria-hidden="true">☰</span></button>
   </header>
   <dialog id="mobile-menu" aria-label="Main navigation">
     <button class="menu-close" type="button" aria-label="Close menu">×</button>
-    <nav aria-label="Mobile navigation"><ul>{nav.map(link => <li><a href={link.url}>{link.label}</a></li>)}</ul></nav>
+    <nav aria-label="Mobile navigation"><ul>{nav.map(link => <li><a href={link.url}><span class="nav-prefix" aria-hidden="true"></span><span class="nav-label">{link.label}</span></a></li>)}</ul></nav>
   </dialog>
   <main id="main">
+    <canvas class="pointer-trail" aria-hidden="true"></canvas>
     <section class="hero wrap" id="top" aria-labelledby="hero-title">
       <div class="terminal">
-        <h1 id="hero-title"><button class="motion-toggle art-toggle" type="button" aria-label="Pause animations" aria-pressed="false">{profile?.displayName ?? 'Arvin'}</button></h1>
-        <p class="role">{profile?.expertiseLine ?? 'Data Engineering | ML/AI Engineering'}</p>
-        <p class="intro">{profile?.biography ?? 'Building reliable data pipelines and scalable data solutions for analytics and AI-powered applications.'}</p>
-
-        <nav class="terminal-list" aria-label="Portfolio directories">{terminalLinks.map(link => <a href={link.url}>{link.label}</a>)}</nav>
-        <Terminal client:load readme={settings?.terminalReadme} visibleSections={visibleSections.map(section => section.id)} />
-        <noscript><p>Command input requires JavaScript. Directory links remain available.</p></noscript>
+        <div class="hero-copy">
+          <h1 id="hero-title"><button class="motion-toggle art-toggle" type="button" aria-label="Pause animations" aria-pressed="false">{profile?.displayName ?? 'Arvin'}</button></h1>
+          <p class="role">{profile?.expertiseLine ?? 'Data Engineering | ML/AI Engineering'}</p>
+          <p class="intro">{profile?.biography ?? 'Building reliable data pipelines and scalable data solutions for analytics and AI-powered applications.'}</p>
+          <nav class="terminal-list" aria-label="Portfolio directories">{terminalLinks.map(link => <a href={link.url}>{link.label}</a>)}</nav>
+        </div>
+        <img class="hero-dots" src="/art/walking-dots.png" data-loop="/art/walking-dots.gif" width="480" height="320" alt="" />
+        <div class="terminal-shell">
+          <Terminal client:load readme={settings?.terminalReadme} visibleSections={visibleSections.map(section => section.id)} />
+          <noscript><p>Command input requires JavaScript. Directory links remain available.</p></noscript>
+        </div>
       </div>
     </section>
 
     {visibleSections.map(section => <>
     {section.id === "writing" && <EditorialSection id="writing" lead="" emphasis={section.heading ?? "Writings"}>
-      {latestWriting(writing).map((item, index) => <div class="entry"><a class="writing-link" href={`/writing/${item.slug}/`}><span>{item.publishedAt ?? (settings?.writingUi.sampleDraftHome ?? settings?.writingUi.sampleDraft ?? 'SAMPLE DRAFT')}</span><strong>{item.title}</strong><span>{settings?.writingUi.readArticle ?? 'Read article ↗'}</span></a></div>)}
+      {latestWriting(writing).map(item => <div class="entry"><a class:list={['writing-link', { 'has-date': item.publishedAt }]} href={`/writing/${item.slug}/`}><strong>{item.title}</strong>{item.publishedAt && <time datetime={item.publishedAt}>{item.publishedAt.slice(0, 10)}</time>}<span>{settings?.writingUi.readArticle ?? 'Read article ↗'}</span></a></div>)}
       <p class="writing-more"><a href="/writing/">{settings?.writingUi.seeAllWritings ?? 'See all writings ↗'}</a></p>
 
     </EditorialSection>}
@@ -74,7 +80,7 @@ import { latestWriting } from "../writing-order.mjs";
       {experience.map(item => <div class="entry"><div class="entry-date">{item.date}</div><h3>{item.title}</h3><p>{item.organization}</p></div>)}
     </EditorialSection>}
     {section.id === "achievements" && <EditorialSection id="achievements" lead="" emphasis={section.heading ?? "Achievements"}>
-      {achievements.map(item => <div class="entry"><p>{typeof item === 'string' ? item : <a class="achievement-link" href={item.href}>{item.title}</a>}</p></div>)}
+      {achievements.map(item => <div class="entry"><p>{typeof item === 'string' ? item : <a class="achievement-link" href={item.href}><span class="achievement-title">{item.title}</span><span class="achievement-arrow" aria-hidden="true">↗</span></a>}</p></div>)}
     </EditorialSection>}
     {section.id === "certificates" && <CertificatesSection heading={section.heading} credentials={cmsCollections?.credentials} />}
     {section.id === "contact" && <section class="contact-section" id="contact" aria-labelledby="contact-title"><div class="wrap contact-inner"><div class="contact-art"><canvas class="section-art" data-dither="contact" aria-hidden="true" width="96" height="72"></canvas></div><div><h2 id="contact-title" class="contact-invitation" tabindex="-1">{section.heading ?? settings?.contactQuestion ?? 'Building something with Data or AI?'}</h2><div class="contact-links"><a href={`mailto:${profile?.email ?? 'arvinantobahtiar@gmail.com'}`}>{settings?.contactAction ?? 'Contact me ↗'}</a>{profile ? profile.links.map(link => <a class="social-highlight" href={link.url}>{link.label} <span aria-hidden="true">↗</span></a>) : <><a class="social-highlight" href="https://www.linkedin.com/in/arvinanto/">LinkedIn <span aria-hidden="true">↗</span></a><a class="social-highlight" href="https://github.com/suxeno">GitHub <span aria-hidden="true">↗</span></a><a class="social-highlight" href="https://medium.com/@arvinantobahtiar">Medium <span aria-hidden="true">↗</span></a></>}</div></div></div>
@@ -82,6 +88,6 @@ import { latestWriting } from "../writing-order.mjs";
     </>)}
   </main>
   <footer class="wrap"><span>{settings?.wordmark ?? 'ARVIN / PROFILE'}</span><nav aria-label="Footer navigation">{footerNav.map(link => <a href={link.url}>{link.label}</a>)}</nav><a href="#top">{settings?.footerBackToTop ?? 'Back to top ↑'}</a></footer>
-<script>import "../main"; import "../section-art"; import "../mobile-nav";</script>
+<script>import "../main"; import "../section-art"; import "../mobile-nav"; import "../landing-effects";</script>
 </body>
 </html>
