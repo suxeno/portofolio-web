@@ -363,3 +363,106 @@ test('trail expiry clears previous during active click wave and non-primary pen 
     await page.close();
   }
 });
+
+test('blank hero gutters, gaps, and decorative hero-dots pulse on desktop and mobile while hero controls and content do not', async () => {
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  try {
+    await page.goto(fixture.url);
+    await page.locator('.boot').waitFor({ state: 'detached' });
+    const clockStart = Date.parse('2026-01-01T00:00:00Z');
+    await page.clock.install({ time: clockStart });
+    await page.clock.pauseAt(clockStart + 1000);
+
+    const desktopCoords = await page.evaluate(() => {
+      const hero = document.querySelector('.hero').getBoundingClientRect();
+      const copy = document.querySelector('.hero-copy').getBoundingClientRect();
+      const dots = document.querySelector('.hero-dots').getBoundingClientRect();
+      return {
+        topPad: { x: Math.round(hero.left + 120), y: Math.round(hero.top + 20) },
+        colGap: { x: Math.round((copy.right + dots.left) / 2), y: Math.round((dots.top + dots.bottom) / 2) },
+        aboveDots: { x: Math.round(dots.left + dots.width / 2), y: Math.round(dots.top - 20) },
+        dotsCenter: { x: Math.round(dots.left + dots.width / 2), y: Math.round(dots.top + dots.height / 2) },
+        bottomPad: { x: Math.round(hero.left + 120), y: Math.round(hero.bottom - 30) },
+      };
+    });
+
+    for (const [label, pt] of Object.entries(desktopCoords)) {
+      await clickWithoutTrail(page, pt.x, pt.y);
+      await page.clock.runFor(32);
+      const sample = await sampleRegion(page, Math.max(0, pt.x - 48), Math.max(0, pt.y - 48), 96, 96);
+      assert.ok(sample.pixels > 0, `desktop hero ${label} at (${pt.x}, ${pt.y}) must pulse`);
+      assert.equal(sample.outlineOnly, true, `desktop hero ${label} pulse must be outline-only`);
+      await page.clock.runFor(1000);
+      assert.equal(await totalCanvasPixels(page), 0);
+    }
+
+    // Blocked hero controls & content must still not pulse
+    const heroBlocked = [
+      ['wordmark replay', page.locator('.hero-wordmark')],
+      ['hero role', page.locator('.hero .role')],
+      ['hero intro', page.locator('.hero .intro')],
+      ['hero directory nav', page.locator('.hero .terminal-list')],
+      ['terminal run button', page.locator('#command-form button[type="submit"]')],
+      ['terminal hint', page.locator('.command-hint')],
+      ['motion toggle', page.locator('.motion-toggle')],
+    ];
+    for (const [label, loc] of heroBlocked) {
+      const box = await loc.boundingBox();
+      assert.ok(box, `${label} must have a bounding box`);
+      await clickWithoutTrail(page, Math.round(box.x + box.width / 2), Math.round(box.y + box.height / 2));
+      await page.clock.runFor(32);
+      assert.equal(await totalCanvasPixels(page), 0, `desktop ${label} must not pulse`);
+    }
+    // Resume animations after clicking motion toggle above
+    await page.getByRole('button', { name: 'Resume animations' }).click();
+  } finally {
+    await page.close();
+  }
+
+  // Mobile tap in blank hero areas
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  const mobilePage = await context.newPage();
+  try {
+    await mobilePage.goto(fixture.url);
+    await mobilePage.locator('.boot').waitFor({ state: 'detached' });
+    const clockStart = Date.parse('2026-01-01T00:00:00Z');
+    await mobilePage.clock.install({ time: clockStart });
+    await mobilePage.clock.pauseAt(clockStart + 1000);
+
+    const mobileCoords = await mobilePage.evaluate(() => {
+      const hero = document.querySelector('.hero').getBoundingClientRect();
+      const dots = document.querySelector('.hero-dots').getBoundingClientRect();
+      return {
+        topPad: { x: Math.round(hero.left + 80), y: Math.round(hero.top + 20) },
+        aboveDotsGap: { x: Math.round(dots.left + dots.width / 2), y: Math.round(dots.top - 15) },
+        dotsCenter: { x: Math.round(dots.left + dots.width / 2), y: Math.round(dots.top + dots.height / 2) },
+      };
+    });
+
+    for (const [label, pt] of Object.entries(mobileCoords)) {
+      await mobilePage.touchscreen.tap(pt.x, pt.y);
+      await mobilePage.clock.runFor(32);
+      const sample = await sampleRegion(mobilePage, Math.max(0, pt.x - 48), Math.max(0, pt.y - 48), 96, 96);
+      assert.ok(sample.pixels > 0, `mobile hero ${label} at (${pt.x}, ${pt.y}) must pulse`);
+      assert.equal(sample.outlineOnly, true);
+      await mobilePage.clock.runFor(1000);
+      assert.equal(await totalCanvasPixels(mobilePage), 0);
+    }
+
+    // Blocked mobile hero targets must not pulse
+    for (const [label, loc] of [
+      ['wordmark replay', mobilePage.locator('.hero-wordmark')],
+      ['hero role', mobilePage.locator('.hero .role')],
+      ['terminal input', mobilePage.locator('#command')],
+      ['terminal hint', mobilePage.locator('.command-hint')],
+    ]) {
+      const box = await loc.boundingBox();
+      assert.ok(box);
+      await mobilePage.touchscreen.tap(Math.round(box.x + box.width / 2), Math.round(box.y + box.height / 2));
+      await mobilePage.clock.runFor(32);
+      assert.equal(await totalCanvasPixels(mobilePage), 0, `mobile ${label} must not pulse`);
+    }
+  } finally {
+    await context.close();
+  }
+});

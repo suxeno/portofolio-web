@@ -9,7 +9,7 @@
 }
 :is(.site-header, #mobile-menu) nav a:is(:hover,:focus-visible) .nav-label { background-size: 100% 1px; }
 
-.hero-dots { display:block; width:min(100%,480px); height:auto; align-self:center; justify-self:end; }
+.hero-dots { display:block; width:min(100%,480px); height:auto; align-self:center; justify-self:end; pointer-events:none; }
 @media(min-width:1080px) {
   .hero .terminal { display:grid; grid-template-columns:minmax(0,1.4fr) minmax(0,1fr); column-gap:clamp(32px,5vw,76px); }
   .terminal-shell { grid-column:1 / -1; min-width:0; }

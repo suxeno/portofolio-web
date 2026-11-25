@@ -16,7 +16,7 @@ const pulseBeats = [{ delay: 0, alpha: 0.44 }, { delay: 170, alpha: 0.22 }] as c
 const pulseDuration = pulseBeats[pulseBeats.length - 1].delay + pulseMaxRadius * pulseRingStep + pulseRingFade;
 const pulseLimit = 8;
 const blockedSelector = [
-  '.boot', '#mobile-menu', '.site-header', 'nav', 'footer', '.hero',
+  '.boot', '#mobile-menu', '.site-header', 'nav', 'footer',
   '.project-card', '.document', '.tool', '.tools-row', '.slider-controls',
   '.terminal-shell', '#command-form', 'form', 'a', 'button', 'input',
   'textarea', 'select', 'option', 'label', '[role="button"]', '[role="link"]',
