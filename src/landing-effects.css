@@ -15,9 +15,11 @@
 .motion-panel svg :is(g, path, circle, rect) { vector-effect:non-scaling-stroke; }
 .motion-panel .track { opacity:.22; }
 .motion-panel .marks { opacity:.45; }
-.motion-panel .wheel, .motion-panel .satellite { transform-origin:250px 200px; animation:hero-turn 8s linear infinite; }
-.motion-panel .satellite { animation-direction:reverse; }
-.motion-panel .bar { transform-origin:250px 200px; animation:hero-breathe 8s ease-in-out infinite; }
+.motion-panel .wheel, .motion-panel .satellite { transform-origin:250px 200px; }
+.motion-panel:where(.is-animated) .wheel, .motion-panel:where(.is-animated) .satellite { animation:hero-turn 8s linear infinite; }
+.motion-panel:where(.is-animated) .satellite { animation-direction:reverse; }
+.motion-panel .bar { transform-origin:250px 200px; }
+.motion-panel:where(.is-animated) .bar { animation:hero-breathe 8s ease-in-out infinite; }
 @keyframes hero-turn { to { transform:rotate(360deg); } }
 @keyframes hero-breathe { 0%, 100% { transform:scaleX(.72); opacity:.45; } 50% { transform:scaleX(1); opacity:1; } }
 .title-paused .motion-panel *, .motion-panel.is-paused * { animation-play-state:paused; }

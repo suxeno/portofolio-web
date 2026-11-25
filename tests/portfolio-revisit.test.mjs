@@ -176,6 +176,10 @@ test('hero SVG loops cleanly over 8s and works in no-JS and reduced-motion modes
     await noJsPage.goto(fixture.url);
     const box = await noJsPage.locator('.motion-panel svg').boundingBox();
     assert.ok(box && box.width > 200 && box.height > 200, 'inline SVG renders without JS');
+    assert.equal(await noJsPage.evaluate(() => document.querySelector('.motion-panel').getAnimations({subtree: true}).length), 0, 'no running hero animations without JS');
+    for (const sel of ['.wheel', '.satellite', '.bar']) {
+      assert.equal(await noJsPage.evaluate(s => getComputedStyle(document.querySelector(`.motion-panel ${s}`)).animationName, sel), 'none', `${sel} is static without JS`);
+    }
     await noJsPage.emulateMedia({reducedMotion:'reduce'});
     assert.equal(await noJsPage.evaluate(() => getComputedStyle(document.querySelector('.motion-panel .wheel')).animationName), 'none');
   } finally { await noJsCtx.close(); }

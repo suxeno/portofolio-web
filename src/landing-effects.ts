@@ -175,6 +175,7 @@ function move(event: PointerEvent) {
 }
 
 if (heroPanel) {
+  heroPanel.classList.add('is-animated');
   if ('IntersectionObserver' in window) {
     const observer = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; sync(); }, { threshold: 0.05 });
     observer.observe(heroPanel);
