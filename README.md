@@ -37,6 +37,7 @@ tests/                 # Unit, browser and Worker regression tests
 
 - `/` is the portfolio; `/writing/` is the archive; `/writing/<slug>/` is an article.
 - On `/`, activating the `ARVIN` wordmark replays a brief stepped fragment animation, the hero renders an eight-second monochrome inline SVG choreography, clicking the landing background emits an outline square pulse, and the corner pixels toggle global animation pause.
+- Writings uses a viewport-paused WebM loop with a static fallback; Achievements uses a static SVG.
 - `/admin/` is Sanity Studio. Set both public build variables, `SANITY_PROJECT_ID` and `SANITY_DATASET`, to enable it. With neither set, the site uses local content.
 - Published edits appear without a rebuild, subject to the Worker’s 60-second cache and Sanity CDN propagation. See [CMS setup](docs/CMS-IMPLEMENTATION.md).
 - Project covers fill a 16:9 frame with a centered crop. The black-and-white dither is the default on desktop and touch; hover or keyboard focus reveals the original. If dithering is unavailable, the original is shown when it can load. Upload a normal color image with alt text.

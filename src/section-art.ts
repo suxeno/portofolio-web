@@ -1,10 +1,18 @@
 // Bounded ink studies: writing, building blocks, a career path, a cup and a signal.
-const artworks = [...document.querySelectorAll<HTMLCanvasElement>('.section-art')];
+const artworks = [...document.querySelectorAll<HTMLCanvasElement>('canvas.section-art[data-dither]')];
+const writingFrame = document.querySelector<HTMLElement>('[data-writing-art]');
+const writingVideo = writingFrame?.querySelector<HTMLVideoElement>('.writing-video') ?? null;
 const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
 const bayer = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
 const visible = new Set<HTMLCanvasElement>();
 const drawn = new WeakSet<HTMLCanvasElement>();
 const toggle = document.querySelector<HTMLButtonElement>('.art-toggle');
+let writingNear = false;
+let writingVisible = false;
+let writingError = false;
+let writingBound = false;
+let writingLoadObserver: IntersectionObserver | null = null;
+let writingPlayObserver: IntersectionObserver | null = null;
 let paused = false;
 try { paused = sessionStorage.getItem('art-paused') === 'true'; } catch { /* storage may be unavailable */ }
 function updateToggle(): void {
@@ -20,6 +28,7 @@ function onToggle(): void {
   updateToggle();
   if (paused) { cancelAnimationFrame(frame); frame = 0; started = 0; }
   else schedule();
+  syncWriting();
 }
 let frame = 0;
 let started = 0;
@@ -131,25 +140,84 @@ const observer = 'IntersectionObserver' in window ? new IntersectionObserver(ent
   if (!visible.size) { cancelAnimationFrame(frame); frame = 0; started = 0; }
   schedule();
 }) : null;
+function bindWriting(): void {
+  if (writingBound || !writingFrame || !writingVideo) return;
+  writingBound = true;
+  const markReady = () => {
+    if (!writingError && writingVideo.readyState >= 2) writingFrame.dataset.ready = 'true';
+  };
+  writingVideo.addEventListener('playing', markReady);
+  writingVideo.addEventListener('loadeddata', () => {
+    if (writingVideo.currentTime > 0.04) markReady();
+  });
+  writingVideo.addEventListener('error', () => {
+    writingError = true;
+    writingFrame.dataset.error = 'true';
+    writingFrame.dataset.ready = 'false';
+  });
+}
+function syncWriting(): void {
+  if (!writingFrame || !writingVideo) return;
+  writingFrame.dataset.reduced = String(reduced.matches);
+  const shouldLoad = (writingNear || writingVisible) && !paused && !document.hidden && !reduced.matches && !writingError;
+  if (shouldLoad && !writingVideo.getAttribute('src') && writingVideo.dataset.src) {
+    writingVideo.src = writingVideo.dataset.src;
+    writingVideo.load();
+  }
+  const shouldPlay = writingVisible && !paused && !document.hidden && !reduced.matches && !writingError;
+  if (shouldPlay) {
+    if (writingVideo.readyState >= 2 && writingVideo.currentTime > 0.04) {
+      writingFrame.dataset.ready = 'true';
+    }
+    if (writingVideo.paused) {
+      void writingVideo.play().catch(() => { /* autoplay or abort errors keep static poster */ });
+    }
+  } else if (!writingVideo.paused) {
+    writingVideo.pause();
+  }
+}
 function onVisibility(): void {
   if (document.hidden) { cancelAnimationFrame(frame); frame = 0; started = 0; }
   else schedule();
+  syncWriting();
 }
 function onMotion(): void {
   if (reduced.matches) { cancelAnimationFrame(frame); frame = 0; started = 0; if (!paused) visible.forEach(canvas => draw(canvas, 0)); }
   else schedule();
+  syncWriting();
 }
 function connect(): void {
   updateToggle();
+  bindWriting();
   toggle?.addEventListener('click', onToggle);
   if (observer) artworks.forEach(canvas => observer.observe(canvas));
   else artworks.forEach(canvas => draw(canvas, 0));
+  if (writingFrame && writingVideo) {
+    if ('IntersectionObserver' in window) {
+      writingLoadObserver = new IntersectionObserver(entries => {
+        writingNear = entries.some(entry => entry.isIntersecting);
+        syncWriting();
+      }, { rootMargin: '120px' });
+      writingPlayObserver = new IntersectionObserver(entries => {
+        writingVisible = entries.some(entry => entry.isIntersecting);
+        syncWriting();
+      });
+      writingLoadObserver.observe(writingFrame);
+      writingPlayObserver.observe(writingFrame);
+    } else {
+      writingNear = true;
+      writingVisible = true;
+    }
+    syncWriting();
+  }
   document.addEventListener('visibilitychange', onVisibility);
   reduced.addEventListener('change', onMotion);
 }
 connect();
 window.addEventListener('pagehide', () => {
   cancelAnimationFrame(frame); frame = 0; started = 0; observer?.disconnect(); visible.clear();
+  writingLoadObserver?.disconnect(); writingLoadObserver = null; writingNear = false;
+  writingPlayObserver?.disconnect(); writingPlayObserver = null; writingVisible = false; writingVideo?.pause();
   toggle?.removeEventListener('click', onToggle);
   document.removeEventListener('visibilitychange', onVisibility); reduced.removeEventListener('change', onMotion);
 });

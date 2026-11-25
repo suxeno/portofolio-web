@@ -3,6 +3,36 @@ interface Props { id: string; lead: string; emphasis: string }
 const { id, lead, emphasis } = Astro.props;
 ---
 <section class="editorial wrap" id={id} aria-labelledby={`${id}-title`}>
-  <div class="art-column"><canvas class="section-art" data-dither={id} aria-hidden="true" width={id === 'writing' || id === 'achievements' ? 192 : 96} height={id === 'writing' || id === 'achievements' ? 192 : 72}></canvas></div>
+  <div class="art-column">
+    {id === 'writing' ? (
+      <div class="writing-art-frame" data-writing-art>
+        <img
+          class="section-art writing-poster"
+          src="/art/writing-poster.webp"
+          width="1206"
+          height="682"
+          alt=""
+          aria-hidden="true"
+          decoding="async"
+        />
+        <video
+          class="section-art writing-video"
+          data-src="/art/writing-loop.webm"
+          poster="/art/writing-poster.webp"
+          width="1206"
+          height="682"
+          muted
+          loop
+          playsinline
+          preload="none"
+          aria-hidden="true"
+        ></video>
+      </div>
+    ) : id === 'achievements' ? (
+      <img class="section-art achievement-static" src="/art/achievements-static.svg" width="400" height="835" alt="" decoding="async" />
+    ) : (
+      <canvas class="section-art" data-dither={id} aria-hidden="true" width={id === 'achievements' ? 192 : 96} height={id === 'achievements' ? 192 : 72}></canvas>
+    )}
+  </div>
   <div><h2 id={`${id}-title`} tabindex="-1">{lead} <em>{emphasis}</em></h2><slot /></div>
 </section>

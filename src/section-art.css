@@ -92,7 +92,11 @@ footer p { flex-basis:100%; margin:0; }
 
 /* Revision: the page and trophy are compositions; the career mark is a glyph. */
 #writing .art-column { float:left; width:27%; margin:0 4% 0 0; }
-#writing .section-art { max-width:none; aspect-ratio:1; width:100%; }
+#writing .writing-art-frame { position:relative; width:100%; aspect-ratio:16 / 9; overflow:hidden; }
+#writing .section-art { max-width:none; aspect-ratio:16 / 9; width:100%; height:100%; display:block; object-fit:contain; image-rendering:auto; }
+#writing .writing-video { position:absolute; inset:0; visibility:hidden; }
+#writing .writing-art-frame[data-ready="true"]:not([data-reduced="true"]):not([data-error="true"]) .writing-video { visibility:visible; }
+#writing .writing-art-frame[data-ready="true"]:not([data-reduced="true"]):not([data-error="true"]) .writing-poster { visibility:hidden; }
 .writing-more { margin:24px 0 0; font-size:14px; }
 #experience .art-column { float:left; width:72px; margin:0 12px 0 0; }
 #experience .section-art { width:72px; }
@@ -130,3 +134,22 @@ footer p { flex-basis:100%; margin:0; }
  #achievements .entry { clear:both; }
 }
 
+
+/* Latest artwork preview */
+#writing .writing-art-frame .section-art { mix-blend-mode:screen; }
+#writing .writing-art-frame, #writing .writing-art-frame .section-art { aspect-ratio:1206 / 682; }
+#achievements .achievement-static { width:100%; height:auto; aspect-ratio:400 / 835; max-width:100%; filter:none; opacity:1; }
+@media(min-width:900px) {
+  #writing { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); column-gap:32px; }
+  #writing .art-column { position:relative; grid-area:1/1; float:none; margin:0; width:auto; }
+  #writing .writing-art-frame { position:absolute; inset:0; height:100%; aspect-ratio:auto; }
+  #writing > div:last-child { grid-area:1/2; min-width:0; }
+  #achievements { --achievement-bottom:100px; grid-template-columns:minmax(0,1fr) clamp(205px,25%,300px); }
+  #achievements::after { display:none; }
+  #achievements .art-column { position:relative; inset:auto; align-items:stretch; }
+  #achievements .achievement-static { position:absolute; top:0; bottom:calc(-1 * var(--achievement-bottom, 100px)); width:100%; height:calc(100% + var(--achievement-bottom,100px)); object-fit:contain; }
+}
+@media(max-width:899px){
+  #achievements .art-column { width:120px; margin:0 0 16px; }
+  #writing .art-column { width:min(100%, 480px); margin-inline:auto; }
+}

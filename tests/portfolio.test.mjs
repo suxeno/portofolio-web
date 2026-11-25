@@ -133,7 +133,7 @@ test('dither renders distinct binary studies after a cached-page restore', async
   await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pagehide', { persisted: true })));
   await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true })));
   const signatures = [];
-  for (const id of ['writing', 'projects', 'experience', 'achievements', 'contact']) {
+  for (const id of ['projects', 'experience', 'contact']) {
     const canvas = page.locator(`[data-dither="${id}"]`);
     await canvas.scrollIntoViewIfNeeded();
     await page.waitForTimeout(200);
@@ -143,7 +143,7 @@ test('dither renders distinct binary studies after a cached-page restore', async
     assert.ok(alpha.every(a => a === 0 || a === 255), `${id} is one-bit`);
     signatures.push(alpha.join(','));
   }
-  assert.equal(new Set(signatures).size, 5);
+  assert.equal(new Set(signatures).size, 3);
   await page.close();
 });
 test('visible dither continues changing pixels beyond four seconds', async () => {
@@ -237,7 +237,9 @@ test('art pause survives an article round trip', async () => {
     await page.getByRole('button', { name: 'Pause animations' }).click();
     await page.locator('#writing a').first().click(); await page.locator('a[href="/#writing"]').click();
     assert.equal(await page.getByRole('button', { name: 'Resume animations' }).getAttribute('aria-pressed'), 'true');
-    const canvas = page.locator('[data-dither="writing"]'); await canvas.scrollIntoViewIfNeeded(); await page.waitForTimeout(300);
+    const video = page.locator('#writing .writing-video'); await video.scrollIntoViewIfNeeded(); await page.waitForTimeout(300);
+    assert.equal(await video.evaluate(v => v.paused), true);
+    const canvas = page.locator('[data-dither="projects"]'); await canvas.scrollIntoViewIfNeeded(); await page.waitForTimeout(300);
     const frozen = await canvas.evaluate(c => c.toDataURL()); await page.waitForTimeout(700); assert.equal(await canvas.evaluate(c => c.toDataURL()), frozen);
   } finally { await page.close(); }
 });
@@ -300,7 +302,7 @@ test('headings, terminal divider and achievement art separation', async () => {
  for (const width of [1440,1366,1280,390,320]) {
   const page=await browser.newPage({viewport:{width,height:900},reducedMotion:'reduce'}); await page.goto(url);
   for (const [id,title] of [['writing','Writings'],['projects','Projects'],['experience','Experience'],['achievements','Achievements'],['contact','Building something with Data or AI?']]) assert.equal((await page.locator(`#${id}-title`).innerText()).trim(),title);
-  const edges=await page.evaluate(()=>({right:document.querySelector('#top').getBoundingClientRect().right,terminal:document.querySelector('.command-line').getBoundingClientRect().right,art:document.querySelector('#achievements canvas').getBoundingClientRect().toJSON(),awards:[...document.querySelectorAll('#achievements .entry')].map(e=>e.getBoundingClientRect().toJSON())}));
+  const edges=await page.evaluate(()=>({right:document.querySelector('#top').getBoundingClientRect().right,terminal:document.querySelector('.command-line').getBoundingClientRect().right,art:document.querySelector('#achievements .achievement-static').getBoundingClientRect().toJSON(),awards:[...document.querySelectorAll('#achievements .entry')].map(e=>e.getBoundingClientRect().toJSON())}));
   assert.ok(Math.abs(edges.terminal-edges.right)<0.1,`terminal ${width}: ${edges.terminal} vs ${edges.right}`); assert.equal(edges.awards.length,4);
   for(const r of edges.awards) assert.ok(r.right <= edges.art.left || r.top >= edges.art.bottom || r.bottom <= edges.art.top, `achievement collision ${width}: ${JSON.stringify({r,art:edges.art})}`);
   await page.close();
@@ -313,7 +315,7 @@ test('mobile writing and achievement artwork leads its heading in normal flow', 
   try {
    await page.goto(url);
    for (const id of ['writing','achievements']) {
-    const box=await page.locator(`#${id}`).evaluate(section=>({art:section.querySelector('canvas').getBoundingClientRect().toJSON(),heading:section.querySelector('h2').getBoundingClientRect().toJSON(),section:section.getBoundingClientRect().toJSON(),float:getComputedStyle(section.querySelector('.art-column')).float}));
+    const box=await page.locator(`#${id}`).evaluate(section=>({art:(section.querySelector('.writing-art-frame')||section.querySelector('.achievement-static')).getBoundingClientRect().toJSON(),heading:section.querySelector('h2').getBoundingClientRect().toJSON(),section:section.getBoundingClientRect().toJSON(),float:getComputedStyle(section.querySelector('.art-column')).float}));
     assert.equal(box.float,'none',`${id} ${width} must not float`);
     assert.ok(box.art.bottom<=box.heading.top,`${id} ${width} artwork must precede heading: ${JSON.stringify(box)}`);
     assert.ok(Math.abs(box.art.left-box.heading.left)<1 && Math.abs(box.art.left-box.section.left)<1,`${id} ${width} left alignment: ${JSON.stringify(box)}`);
