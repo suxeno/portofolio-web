@@ -9,4 +9,5 @@ dist/
 .screenshots/
 .astro/
 .art_evidence/
+/graphify-out/
 

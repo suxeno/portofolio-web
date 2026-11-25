@@ -18,6 +18,23 @@
   .section-art { width: 96px; margin-top: 12px; }
 }
 @media (prefers-reduced-motion: reduce) { .section-art { transition: none; } }
+/* Hero wordmark click-to-replay and independent corner-pixel pause control. */
+#hero-title::after { content: none; animation: none; }
+.hero-title-row { position: relative; display: flex; align-items: flex-start; width: max-content; max-width: 100%; margin: 36px 0; font-family: Silkscreen, monospace; font-size: clamp(64px, 10vw, 144px); font-weight: 700; line-height: 1.1; }
+.hero-title-row #hero-title { margin: 0; font-size: inherit; line-height: inherit; }
+.hero-wordmark { position: relative; display: inline-block; background: none; border: 0; padding: 0; margin: 0; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; line-height: inherit; cursor: pointer; }
+.hero-wordmark:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+.hero-wordmark-text { display: inline-block; }
+.hero-wordmark[data-replaying="true"] .hero-wordmark-text { opacity: 0; }
+.hero-wordmark-strips { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
+.hero-wordmark-strips[hidden] { display: none; }
+.hero-wordmark-strip { position: absolute; inset: 0; display: inline-block; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; line-height: inherit; white-space: nowrap; }
+.hero-wordmark-scanline { position: absolute; left: 0; right: 0; height: 2px; background: currentColor; opacity: 0; pointer-events: none; }
+.hero-title-row .motion-toggle.art-toggle { position: relative; flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; width: max(44px, .48em); height: max(44px, .48em); margin: .08em 0 0 -.02em; padding: 0; border: 0; background: transparent; color: inherit; cursor: pointer; }
+.art-toggle-pixels { display: block; width: .08em; height: .08em; transform: translate(-.07em, -.07em); background: currentColor; box-shadow: .14em .14em currentColor; animation: pixel-pulse 4s steps(1, end) infinite; pointer-events: none; }
+.title-paused .art-toggle-pixels { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) { .art-toggle-pixels { animation: none; } }
+@media (max-width: 480px) { .hero-title-row .motion-toggle.art-toggle { position: absolute; right: -22px; top: 0; margin: 0; } }
 /* Section art occupies a different role in each content composition. */
 .motion-toggle.art-toggle { width:auto; border:0; padding:0; font:inherit; }
 .editorial { position:relative; }

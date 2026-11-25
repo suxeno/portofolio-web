@@ -725,15 +725,17 @@ test('intro has no obsolete personal profile footer', async () => {
 
 test('wordmark pixels animate and can be paused', async () => {
  const page=await browser.newPage(); await page.goto(url); await page.keyboard.press('Escape');
- const title=page.locator('#hero-title');
- assert.notEqual(await title.evaluate(el=>getComputedStyle(el,'::after').animationName), 'none');
- const toggle=page.getByRole('button',{name:'Pause animations'}); assert.equal(await toggle.textContent(), 'Arvin');
+ const pixels=page.locator('.art-toggle-pixels');
+ assert.notEqual(await pixels.evaluate(el=>getComputedStyle(el).animationName), 'none');
+ const toggle=page.getByRole('button',{name:'Pause animations'});
+ assert.equal(await page.getByRole('heading',{level:1,name:'Arvin'}).count(), 1);
+ assert.equal((await page.locator('#hero-title .hero-wordmark-text').innerText()).trim().toUpperCase(), 'ARVIN');
  await toggle.focus(); await page.keyboard.press('Enter');
- assert.equal(await title.evaluate(el=>getComputedStyle(el,'::after').animationPlayState), 'paused');
+ assert.equal(await pixels.evaluate(el=>getComputedStyle(el).animationPlayState), 'paused');
  await page.keyboard.press('Space');
- assert.equal(await title.evaluate(el=>getComputedStyle(el,'::after').animationPlayState), 'running');
+ assert.equal(await pixels.evaluate(el=>getComputedStyle(el).animationPlayState), 'running');
  await page.emulateMedia({reducedMotion:'reduce'});
- assert.equal(await title.evaluate(el=>getComputedStyle(el,'::after').animationName), 'none'); await page.close();
+ assert.equal(await pixels.evaluate(el=>getComputedStyle(el).animationName), 'none'); await page.close();
 });
 
 test('command input presents a steady bar at the insertion point', async () => {
@@ -783,7 +785,11 @@ test('body and editorial copy use JetBrains Mono', async () => {
 });
 
 test('boot and landing use Silkscreen lettering', async () => {
- const page = await browser.newPage(); await page.goto(url);
+ const page = await browser.newPage();
+ await page.clock.install();
+ await page.clock.pauseAt(new Date(Date.now() + 60_000));
+ await page.goto(url, { waitUntil: 'domcontentloaded' });
+ await page.locator('.boot-glyph').waitFor({ state: 'attached', timeout: 5000 });
  await page.evaluate(() => document.fonts.ready);
  assert.match(await page.locator('#hero-title').evaluate(el => getComputedStyle(el).fontFamily), /Silkscreen/i);
  assert.match(await page.locator('.boot-glyph').evaluate(el => getComputedStyle(el).fontFamily), /Silkscreen/i);

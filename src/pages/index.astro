@@ -53,7 +53,10 @@ import { latestWriting } from "../writing-order.mjs";
     <section class="hero wrap" id="top" aria-labelledby="hero-title">
       <div class="terminal">
         <div class="hero-copy">
-          <h1 id="hero-title"><button class="motion-toggle art-toggle" type="button" aria-label="Pause animations" aria-pressed="false">{profile?.displayName ?? 'Arvin'}</button></h1>
+          <div class="hero-title-row">
+            <h1 id="hero-title"><button class="hero-wordmark" type="button"><span class="hero-wordmark-text">{profile?.displayName ?? 'Arvin'}</span></button></h1>
+            <button class="motion-toggle art-toggle" type="button" aria-label="Pause animations" aria-pressed="false"><span class="art-toggle-pixels" aria-hidden="true"></span></button>
+          </div>
           <p class="role">{profile?.expertiseLine ?? 'Data Engineering | ML/AI Engineering'}</p>
           <p class="intro">{profile?.biography ?? 'Building reliable data pipelines and scalable data solutions for analytics and AI-powered applications.'}</p>
           <nav class="terminal-list" aria-label="Portfolio directories">{terminalLinks.map(link => <a href={link.url}>{link.label}</a>)}</nav>
@@ -88,6 +91,6 @@ import { latestWriting } from "../writing-order.mjs";
     </>)}
   </main>
   <footer class="wrap"><span>{settings?.wordmark ?? 'ARVIN / PROFILE'}</span><nav aria-label="Footer navigation">{footerNav.map(link => <a href={link.url}>{link.label}</a>)}</nav><a href="#top">{settings?.footerBackToTop ?? 'Back to top ↑'}</a></footer>
-<script>import "../main"; import "../section-art"; import "../mobile-nav"; import "../landing-effects";</script>
+<script>import "../main"; import "../section-art"; import "../hero-wordmark"; import "../mobile-nav"; import "../landing-effects";</script>
 </body>
 </html>
