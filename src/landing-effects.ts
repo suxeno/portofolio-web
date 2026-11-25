@@ -2,8 +2,7 @@ export {};
 
 const reduced = matchMedia('(prefers-reduced-motion: reduce)');
 const fine = matchMedia('(any-pointer: fine) and (any-hover: hover)');
-const hero = document.querySelector<HTMLImageElement>('.hero-dots');
-const still = hero?.getAttribute('src');
+const heroPanel = document.querySelector<HTMLElement>('.motion-panel');
 const canvas = document.querySelector<HTMLCanvasElement>('.pointer-trail');
 const ctx = canvas?.getContext('2d');
 const cell = 32;
@@ -62,8 +61,7 @@ function ensureCanvasSize(): boolean {
   return true;
 }
 function sync() {
-  const src = allowed() && visible ? hero?.dataset.loop : still;
-  if (src && hero?.getAttribute('src') !== src) hero?.setAttribute('src', src);
+  heroPanel?.classList.toggle('is-paused', !(allowed() && visible));
   if (!allowed()) clear();
   else if (!fine.matches) clearTrail();
 }
@@ -176,14 +174,11 @@ function move(event: PointerEvent) {
   if (!frame) frame = requestAnimationFrame(draw);
 }
 
-if (hero) {
+if (heroPanel) {
   if ('IntersectionObserver' in window) {
-    const observer = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; sync(); });
-    observer.observe(hero);
+    const observer = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; sync(); }, { threshold: 0.05 });
+    observer.observe(heroPanel);
   } else visible = true;
-  if (still) hero.addEventListener('error', () => {
-    if (hero.getAttribute('src') === hero.dataset.loop) hero.setAttribute('src', still);
-  });
 }
 new MutationObserver(sync).observe(document.body, {attributes:true, attributeFilter:['class']});
 reduced.addEventListener('change', sync);

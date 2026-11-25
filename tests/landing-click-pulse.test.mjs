@@ -364,7 +364,7 @@ test('trail expiry clears previous during active click wave and non-primary pen 
   }
 });
 
-test('blank hero gutters, gaps, and decorative hero-dots pulse on desktop and mobile while hero controls and content do not', async () => {
+test('blank hero gutters, gaps, and decorative motion-panel pulse on desktop and mobile while hero controls and content do not', async () => {
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   try {
     await page.goto(fixture.url);
@@ -376,12 +376,11 @@ test('blank hero gutters, gaps, and decorative hero-dots pulse on desktop and mo
     const desktopCoords = await page.evaluate(() => {
       const hero = document.querySelector('.hero').getBoundingClientRect();
       const copy = document.querySelector('.hero-copy').getBoundingClientRect();
-      const dots = document.querySelector('.hero-dots').getBoundingClientRect();
+      const panel = document.querySelector('.motion-panel').getBoundingClientRect();
       return {
         topPad: { x: Math.round(hero.left + 120), y: Math.round(hero.top + 20) },
-        colGap: { x: Math.round((copy.right + dots.left) / 2), y: Math.round((dots.top + dots.bottom) / 2) },
-        aboveDots: { x: Math.round(dots.left + dots.width / 2), y: Math.round(dots.top - 20) },
-        dotsCenter: { x: Math.round(dots.left + dots.width / 2), y: Math.round(dots.top + dots.height / 2) },
+        colGap: { x: Math.round((copy.right + panel.left) / 2), y: Math.round((panel.top + panel.bottom) / 2) },
+        panelCenter: { x: Math.round(panel.left + panel.width / 2), y: Math.round(panel.top + panel.height / 2) },
         bottomPad: { x: Math.round(hero.left + 120), y: Math.round(hero.bottom - 30) },
       };
     });
@@ -431,11 +430,11 @@ test('blank hero gutters, gaps, and decorative hero-dots pulse on desktop and mo
 
     const mobileCoords = await mobilePage.evaluate(() => {
       const hero = document.querySelector('.hero').getBoundingClientRect();
-      const dots = document.querySelector('.hero-dots').getBoundingClientRect();
+      const panel = document.querySelector('.motion-panel').getBoundingClientRect();
       return {
         topPad: { x: Math.round(hero.left + 80), y: Math.round(hero.top + 20) },
-        aboveDotsGap: { x: Math.round(dots.left + dots.width / 2), y: Math.round(dots.top - 15) },
-        dotsCenter: { x: Math.round(dots.left + dots.width / 2), y: Math.round(dots.top + dots.height / 2) },
+        abovePanelGap: { x: Math.round(panel.left + panel.width / 2), y: Math.round(panel.top - 15) },
+        panelCenter: { x: Math.round(panel.left + panel.width / 2), y: Math.round(panel.top + panel.height / 2) },
       };
     });
 

@@ -61,7 +61,7 @@ import { latestWriting } from "../writing-order.mjs";
           <p class="intro">{profile?.biography ?? 'Building reliable data pipelines and scalable data solutions for analytics and AI-powered applications.'}</p>
           <nav class="terminal-list" aria-label="Portfolio directories">{terminalLinks.map(link => <a href={link.url}>{link.label}</a>)}</nav>
         </div>
-        <img class="hero-dots" src="/art/walking-dots.png" data-loop="/art/walking-dots.gif" width="480" height="320" alt="" />
+        <div class="motion-panel" aria-hidden="true"><svg viewBox="0 0 500 400" preserveAspectRatio="xMidYMid meet"><g class="composition"><path class="track" d="M 26 95 H 474 M 26 200 H 474 M 26 305 H 474"/><g class="wheel"><circle cx="250" cy="200" r="130"/><circle cx="250" cy="200" r="81"/><path d="M250 55 V345 M105 200 H395 M147 97 L353 303 M353 97 L147 303"/><rect x="217" y="167" width="66" height="66"/></g><g class="satellite"><circle cx="250" cy="70" r="8" fill="currentColor"/><rect x="242" y="322" width="16" height="16" fill="currentColor"/></g><g class="bar"><path d="M52 153 H448 M52 247 H448"/><circle cx="52" cy="153" r="5" fill="currentColor"/><circle cx="448" cy="247" r="5" fill="currentColor"/></g><path class="marks" d="M26 70 v50 M474 70 v50 M26 280 v50 M474 280 v50 M75 36 h50 M375 364 h50"/></g></svg></div>
         <div class="terminal-shell">
           <Terminal client:load readme={settings?.terminalReadme} visibleSections={visibleSections.map(section => section.id)} />
           <noscript><p>Command input requires JavaScript. Directory links remain available.</p></noscript>
