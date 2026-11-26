@@ -786,19 +786,19 @@ test('body and editorial copy use JetBrains Mono', async () => {
  await page.close();
 });
 
-test('boot and landing use Silkscreen lettering', async () => {
+test('boot and landing use Pixelta lettering', async () => {
  const page = await browser.newPage();
  await page.clock.install();
  await page.clock.pauseAt(new Date(Date.now() + 60_000));
  await page.goto(url, { waitUntil: 'domcontentloaded' });
  await page.locator('.boot-glyph').waitFor({ state: 'attached', timeout: 5000 });
  await page.evaluate(() => document.fonts.ready);
- assert.match(await page.locator('#hero-title').evaluate(el => getComputedStyle(el).fontFamily), /Silkscreen/i);
- assert.match(await page.locator('.boot-glyph').evaluate(el => getComputedStyle(el).fontFamily), /Silkscreen/i);
+ assert.match(await page.locator('#hero-title').evaluate(el => getComputedStyle(el).fontFamily), /Pixelta/i);
+ assert.match(await page.locator('.boot-glyph').evaluate(el => getComputedStyle(el).fontFamily), /Pixelta/i);
  for (const selector of ['#hero-title', '.boot-glyph']) {
    assert.equal(await page.locator(selector).evaluate(el => getComputedStyle(el).fontWeight), '700');
  }
- assert.equal(await page.evaluate(() => [...document.fonts].some(f => f.family === 'Silkscreen' && f.weight === '700' && f.status === 'loaded')), true);
+ assert.equal(await page.evaluate(() => [...document.fonts].some(f => f.family === 'Pixelta' && f.status === 'loaded')), true);
  await page.close();
 });
 

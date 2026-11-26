@@ -21,22 +21,22 @@ test('desktop header, artwork and pointer trail respect motion preferences', asy
     const nav = page.locator('.site-header nav a').first(); await nav.hover();
     assert.equal(await nav.locator('.nav-prefix').count(), 1);
     await page.waitForFunction(() => getComputedStyle(document.querySelector('.site-header nav a:hover .nav-label')).backgroundSize === '100% 1px');
-    await page.waitForSelector('.motion-panel svg');
+    await page.waitForSelector('.motion-panel canvas');
     assert.equal(await page.locator('.hero-dots').count(), 0, 'legacy .hero-dots should be removed');
     assert.deepEqual(artRequests, [], 'homepage should not request walking-dots assets');
     const layout=await page.locator('.hero').evaluate(e=>{
       const rect=selector=>e.querySelector(selector).getBoundingClientRect();
-      const copy=rect('.hero-copy'), panel=rect('.motion-panel'), shell=rect('.terminal-shell'), svg=rect('.motion-panel svg');
+      const copy=rect('.hero-copy'), panel=rect('.motion-panel'), shell=rect('.terminal-shell'), canvas=rect('.motion-panel canvas');
       return {artGap:panel.left-copy.right,
         heightDiff:Math.abs(panel.height-copy.height),
         shellGap:shell.top-panel.bottom,
-        svgWidth:svg.width, svgHeight:svg.height,
+        canvasWidth:canvas.width, canvasHeight:canvas.height,
         dividerGap:e.getBoundingClientRect().right-rect('.command-line').right};
     });
     assert.ok(layout.artGap>0,`art sits to the right of the copy: ${JSON.stringify(layout)}`);
     assert.ok(layout.heightDiff<=2,`motion panel fills full right grid cell height: ${JSON.stringify(layout)}`);
     assert.ok(layout.shellGap>=-1,`terminal shell sits below motion panel: ${JSON.stringify(layout)}`);
-    assert.ok(layout.svgWidth>200 && layout.svgHeight>200,`svg renders with non-zero dimensions: ${JSON.stringify(layout)}`);
+    assert.ok(layout.canvasWidth>200 && layout.canvasHeight>200,`canvas renders with non-zero dimensions: ${JSON.stringify(layout)}`);
     assert.ok(Math.abs(layout.dividerGap)<0.1,`terminal divider stays full-width: ${JSON.stringify(layout)}`);
     // Freeze browser time so slow canvas readbacks cannot consume the 480 ms wake.
     const clockStart = Date.parse('2026-01-01T00:00:00Z');
@@ -72,22 +72,19 @@ test('desktop header, artwork and pointer trail respect motion preferences', asy
     await page.getByRole('button',{name:'Pause animations'}).click();
     await page.mouse.move(400,250); await page.clock.runFor(32);
     assert.equal(await hasPixels(),false,'pause suppresses the trail');
-    await page.waitForFunction(() => getComputedStyle(document.querySelector('.motion-panel .wheel')).animationPlayState === 'paused');
-    assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('.motion-panel .satellite')).animationPlayState), 'paused');
-    assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('.motion-panel .bar')).animationPlayState), 'paused');
+    await page.waitForFunction(() => document.querySelector('.motion-panel')?.classList.contains('is-paused'));
     await page.getByRole('button',{name:'Resume animations'}).click();
-    await page.waitForFunction(() => getComputedStyle(document.querySelector('.motion-panel .wheel')).animationPlayState === 'running');
+    await page.waitForFunction(() => !document.querySelector('.motion-panel')?.classList.contains('is-paused'));
     await page.evaluate(() => window.scrollTo(0, 1200));
-    await page.waitForFunction(() => document.querySelector('.motion-panel').classList.contains('is-paused'));
-    assert.equal(await page.evaluate(() => getComputedStyle(document.querySelector('.motion-panel .wheel')).animationPlayState), 'paused');
+    await page.waitForFunction(() => document.querySelector('.motion-panel')?.classList.contains('is-paused'));
     await page.evaluate(() => window.scrollTo(0, 0));
-    await page.waitForFunction(() => !document.querySelector('.motion-panel').classList.contains('is-paused'));
+    await page.waitForFunction(() => !document.querySelector('.motion-panel')?.classList.contains('is-paused'));
     await page.evaluate(() => { Object.defineProperty(document, 'hidden', { value: true, configurable: true }); document.dispatchEvent(new Event('visibilitychange')); });
-    await page.waitForFunction(() => document.querySelector('.motion-panel').classList.contains('is-paused'));
+    await page.waitForFunction(() => document.querySelector('.motion-panel')?.classList.contains('is-paused'));
     await page.evaluate(() => { Object.defineProperty(document, 'hidden', { value: false, configurable: true }); document.dispatchEvent(new Event('visibilitychange')); });
-    await page.waitForFunction(() => !document.querySelector('.motion-panel').classList.contains('is-paused'));
+    await page.waitForFunction(() => !document.querySelector('.motion-panel')?.classList.contains('is-paused'));
     await page.emulateMedia({reducedMotion:'reduce'});
-    await page.waitForFunction(() => getComputedStyle(document.querySelector('.motion-panel .wheel')).animationName === 'none');
+    await page.waitForFunction(() => document.querySelector('.motion-panel')?.classList.contains('is-paused'));
     await page.mouse.move(350,250); await page.clock.runFor(32);
     assert.equal(await hasPixels(),false,'reduced motion suppresses the trail');
     await page.setViewportSize({width:390,height:844});
@@ -138,50 +135,26 @@ test('mobile artwork fills the available column without overflow', async () => {
   }
 });
 
-test('hero SVG loops cleanly over 8s and works in no-JS and reduced-motion modes', async () => {
+test('hero ASCII Three.js panel renders cleanly and respects no-JS and reduced-motion modes', async () => {
   for (const width of [1280, 1440]) {
     const page = await browser.newPage({viewport:{width, height:900}});
     try {
       await page.goto(fixture.url);
       await page.locator('.boot').waitFor({state:'detached'});
-      await page.waitForFunction(() => document.querySelector('.motion-panel')?.getAnimations({subtree: true}).length === 3);
-      const timing = await page.evaluate(() => document.querySelector('.motion-panel').getAnimations({subtree: true}).map(a => ({ playState: a.playState, duration: a.effect.getTiming().duration })));
-      assert.ok(timing.every(t => t.playState === 'running' && t.duration === 8000), JSON.stringify(timing));
-      const atTime = (ms) => page.evaluate((t) => {
-        for (const a of document.querySelector('.motion-panel').getAnimations({subtree: true})) { a.pause(); a.currentTime = t; }
-        return {
-          wheel: getComputedStyle(document.querySelector('.motion-panel .wheel')).transform,
-          satellite: getComputedStyle(document.querySelector('.motion-panel .satellite')).transform,
-          bar: getComputedStyle(document.querySelector('.motion-panel .bar')).transform,
-        };
-      }, ms);
-      const t0 = await atTime(0);
-      const t2 = await atTime(2000);
-      const t4 = await atTime(4000);
-      const t7999 = await atTime(7999);
-      const t8 = await atTime(8000);
-      assert.notEqual(t0.wheel, t2.wheel);
-      assert.notEqual(t2.wheel, t4.wheel);
-      assert.notEqual(t0.satellite, t2.satellite);
-      assert.notEqual(t0.bar, t4.bar);
-      assert.notEqual(t7999.wheel, t8.wheel);
-      assert.equal(t0.wheel, t8.wheel, '8s wheel seam should match');
-      assert.equal(t0.satellite, t8.satellite, '8s satellite seam should match');
-      assert.equal(t0.bar, t8.bar, '8s bar seam should match');
+      await page.waitForSelector('.motion-panel canvas');
+      const box = await page.locator('.motion-panel canvas').boundingBox();
+      assert.ok(box && box.width > 200 && box.height > 200, `ASCII canvas renders at ${width}: ${JSON.stringify(box)}`);
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      assert.equal(await page.locator('.motion-panel .ascii-profile-lens.is-visible').count(), 1, 'hover reveals blood-red lens');
     } finally { await page.close(); }
   }
   const noJsCtx = await browser.newContext({javaScriptEnabled: false, viewport:{width:1280, height:900}});
   try {
     const noJsPage = await noJsCtx.newPage();
     await noJsPage.goto(fixture.url);
-    const box = await noJsPage.locator('.motion-panel svg').boundingBox();
-    assert.ok(box && box.width > 200 && box.height > 200, 'inline SVG renders without JS');
-    assert.equal(await noJsPage.evaluate(() => document.querySelector('.motion-panel').getAnimations({subtree: true}).length), 0, 'no running hero animations without JS');
-    for (const sel of ['.wheel', '.satellite', '.bar']) {
-      assert.equal(await noJsPage.evaluate(s => getComputedStyle(document.querySelector(`.motion-panel ${s}`)).animationName, sel), 'none', `${sel} is static without JS`);
-    }
+    assert.equal(await noJsPage.locator('.motion-panel canvas').count(), 0, 'no Three.js canvas without JS');
     await noJsPage.emulateMedia({reducedMotion:'reduce'});
-    assert.equal(await noJsPage.evaluate(() => getComputedStyle(document.querySelector('.motion-panel .wheel')).animationName), 'none');
+    assert.equal(await noJsPage.locator('.motion-panel .ascii-profile-lens.is-visible').count(), 0);
   } finally { await noJsCtx.close(); }
 });
 

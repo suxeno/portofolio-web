@@ -54,7 +54,7 @@ footer{flex-wrap:wrap;padding:24px 0}footer nav{display:flex;flex-wrap:wrap;gap:
 
 @font-face{font-family:Pixelta;src:url("/fonts/Pixelta.ttf") format("truetype");font-weight:400 700;font-display:swap}#hero-title,.boot-glyph{font-family:Pixelta,monospace;font-size:clamp(64px,12vw,176px);font-weight:700;letter-spacing:0;text-transform:uppercase;line-height:1.1}
 .hero .hero-title-row{margin:0 0 14px;font-size:clamp(64px,12vw,176px)}
-@media(max-width:480px){.hero .hero-title-row{font-size:clamp(54px,14vw,76px);margin-bottom:12px}}
+@media(max-width:480px){.hero .hero-title-row{font-size:clamp(64px,14vw,76px);margin-bottom:12px}}
 
 .command-input-wrap{position:relative;flex:1;min-width:0;overflow:hidden}.command-line input{display:block;width:100%;caret-color:transparent;outline:none}.command-line input.composing{caret-color:currentColor;caret-animation:manual}.command-measure{position:absolute;visibility:hidden;white-space:pre;font:inherit;font-size:13px;pointer-events:none}.command-caret{position:absolute;top:50%;height:1.15em;width:3px;background:currentColor;transform:translateY(-50%);pointer-events:none}.command-line:focus-within{border-bottom-color:#fff}
 

@@ -110,8 +110,9 @@ function initAsciiProfile(): void {
     camera.updateProjectionMatrix();
     scheduleRender();
   };
+  const isPaused = () => !visible || document.hidden || reduced.matches || document.body.classList.contains('title-paused');
   const updatePointer = (event: PointerEvent) => {
-    if (!visible || reduced.matches || event.pointerType === 'touch' || !lens || !renderer) return;
+    if (isPaused() || event.pointerType === 'touch' || !lens || !renderer) return;
     const rect = panel.getBoundingClientRect();
     const ratio = renderer.getPixelRatio();
     const x = event.clientX - rect.left;
@@ -130,7 +131,9 @@ function initAsciiProfile(): void {
     scheduleRender();
   };
   const sync = () => {
-    if (document.hidden || reduced.matches || document.body.classList.contains('title-paused')) clearPointer();
+    const paused = isPaused();
+    panel.classList.toggle('is-paused', paused);
+    if (paused) clearPointer();
     else scheduleRender();
   };
   const resizeObserver = new ResizeObserver(resize);
@@ -183,7 +186,7 @@ function initAsciiProfile(): void {
       document.addEventListener('visibilitychange', sync);
       reduced.addEventListener('change', sync);
       mutation.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-      observer = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; if (!visible) clearPointer(); else scheduleRender(); });
+      observer = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; sync(); });
       observer.observe(panel);
       sync();
     })

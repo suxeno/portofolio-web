@@ -19,7 +19,7 @@ const blockedSelector = [
   '.project-card', '.document', '.tool', '.tools-row', '.slider-controls',
   '.terminal-shell', '#command-form', 'form', 'a', 'button', 'input',
   'textarea', 'select', 'option', 'label', '[role="button"]', '[role="link"]',
-  '[contenteditable="true"]', '.entry-date', '.motion-panel',
+  '[contenteditable="true"]', '.entry-date',
   'h1, h2, h3, h4, h5, h6, p, strong, em, time, img, canvas, svg, li, span, pre, code, blockquote',
 ].join(',');
 const tiles = new Map<string, {x: number; y: number; time: number}>();
