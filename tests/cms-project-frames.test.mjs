@@ -94,8 +94,10 @@ test('CMS covers fill the 16:9 frame without spilling over the project copy', {t
       assert.ok(geometry.every(frame => Math.abs(frame.width / frame.height - 16 / 9) < .01 && Math.abs(frame.width-geometry[2].width)<.1 && frame.copyBelow), detail);
       assert.ok(geometry.every(frame => frame.pictureFits), `Image box must not spill out of the frame: ${detail}`);
       assert.deepEqual(geometry.map(frame => [frame.imageFit, frame.ditherFit]), [['cover', 'cover'], ['cover', 'cover'], [null, null]], 'Original and dither must both cover the frame');
-      const gap = await page.locator('#projects').evaluate(section => section.querySelector('.project-image').getBoundingClientRect().top - section.querySelector('h2').getBoundingClientRect().bottom);
-      assert.ok(gap >= 16 && gap <= 28, `heading gap at ${width}: ${gap}`);
+      const gap = await page.locator('#projects').evaluate(section => section.querySelector('.project-card').getBoundingClientRect().top - section.querySelector('h2').getBoundingClientRect().bottom);
+      // Measure the heading-to-card gap, excluding the card's own border.
+      const expectedGap = width < 900 ? 40 : 64;
+      assert.ok(Math.abs(gap - expectedGap) < 0.5, `heading-to-card gap at ${width}: expected ${expectedGap}px, got ${gap}px`);
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
     }
     // Fresh contexts exercise the cold loader, CORS retry, terminal failure and no-JS path.
