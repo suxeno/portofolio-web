@@ -13,7 +13,7 @@ typography:
     fontFamily: "JetBrainsMono, monospace"
     fontWeight: 400
   display:
-    fontFamily: "Silkscreen, monospace"
+    fontFamily: "Pixelta, monospace"
     fontSize: "clamp(64px, 10vw, 144px)"
     fontWeight: 700
     lineHeight: 1.1
@@ -40,7 +40,7 @@ The charcoal ground supports near-white primary text and softer secondary inform
 
 ## Typography
 
-Silkscreen Bold is reserved for the ARVIN display and boot glyph. JetBrains Mono is the primary text face. Section headings scale fluidly, while dates and labels are deliberately smaller; no canvas should contain essential text.
+Pixelta is reserved for the ARVIN display and boot glyph. JetBrains Mono is the primary text face. Section headings scale fluidly, while dates and labels are deliberately smaller; no canvas should contain essential text.
 
 ## Layout
 
@@ -58,7 +58,7 @@ Rectilinear lines and square-edged controls echo the terminal. Pixel forms belon
 
 - **Terminal:** optional command input with bounded output, alongside native links. Keep the command prompt and result readable and preserve keyboard interaction.
 - **Editorial content:** the homepage shows at most three most recent writings; a native archive lists all source records. Undated drafts retain source order. Experience is a connected timeline; recognition uses list-column ruled rows.
-- **Dither artwork:** original decorative one-bit canvas studies depict a hand and page, modules, milestones, two hands gripping and lifting a trophy with paper confetti, and an envelope. Projects and Experience have small marks immediately left of their headings. Writing and trophy use 192 × 192 buffers; the others use 96 × 72. Visible artwork repeats at a capped eight updates per second; reduced motion is static, offscreen and hidden artwork suspends, and the ARVIN title control pauses and resumes animation.
+- **Dither artwork:** ASCII profile artwork in the hero renders the monochrome Three.js profile and tints glyphs blood red inside a compact cursor-radius hover mask; its GPU work is bounded to the visible hero and pauses with global pause or reduced motion. Original decorative one-bit section canvases depict a hand and page, modules, milestones, a trophy with confetti and an envelope.
 - **Tools:** three alternating monochrome logo marquees, with a static icon-and-label list when JavaScript or motion is unavailable.
 - **Credentials:** a document folio after Achievements with links to recipient-specific badges. Source certificate images are still missing in the current review draft; placeholder panels must not be mistaken for certificates.
 - **Contact:** the collaboration question is the section heading; one direct email action leads secondary social links. The footer omits the former README block; the terminal can still display its README text.

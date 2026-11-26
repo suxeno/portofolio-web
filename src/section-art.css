@@ -18,9 +18,9 @@
   .section-art { width: 96px; margin-top: 12px; }
 }
 @media (prefers-reduced-motion: reduce) { .section-art { transition: none; } }
-/* Hero wordmark click-to-replay and independent corner-pixel pause control. */
+/* Hero wordmark hover animation and independent corner-pixel pause control. */
 #hero-title::after { content: none; animation: none; }
-.hero-title-row { position: relative; display: flex; align-items: flex-start; width: max-content; max-width: 100%; margin: 36px 0; font-family: Silkscreen, monospace; font-size: clamp(64px, 10vw, 144px); font-weight: 700; line-height: 1.1; }
+.hero-title-row { position: relative; display: flex; align-items: flex-start; width: max-content; max-width: 100%; margin: 36px 0; font-family: Pixelta, monospace; font-size: clamp(64px, 10vw, 144px); font-weight: 700; line-height: 1.1; }
 .hero-title-row #hero-title { margin: 0; font-size: inherit; line-height: inherit; }
 .hero-wordmark { position: relative; display: inline-block; background: none; border: 0; padding: 0; margin: 0; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; line-height: inherit; cursor: pointer; }
 .hero-wordmark:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }

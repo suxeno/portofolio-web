@@ -19,7 +19,7 @@ const blockedSelector = [
   '.project-card', '.document', '.tool', '.tools-row', '.slider-controls',
   '.terminal-shell', '#command-form', 'form', 'a', 'button', 'input',
   'textarea', 'select', 'option', 'label', '[role="button"]', '[role="link"]',
-  '[contenteditable="true"]', '.entry-date',
+  '[contenteditable="true"]', '.entry-date', '.motion-panel',
   'h1, h2, h3, h4, h5, h6, p, strong, em, time, img, canvas, svg, li, span, pre, code, blockquote',
 ].join(',');
 const tiles = new Map<string, {x: number; y: number; time: number}>();
@@ -150,6 +150,10 @@ function pointerUp(event: PointerEvent) {
 function move(event: PointerEvent) {
   invalidateMovedPointer(event);
   if (!ctx || !canvas || event.pointerType !== 'mouse' || !allowed() || !fine.matches || hasOverlay()) return;
+  if (event.target instanceof Element && event.target.closest('.motion-panel')) {
+    clearTrail();
+    return;
+  }
   if (!ensureCanvasSize()) return;
   const x = Math.floor(event.clientX / cell), y = Math.floor(event.clientY / cell);
   const start = previous ?? {x, y};

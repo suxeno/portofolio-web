@@ -61,6 +61,8 @@ function initHeroWordmark(): void {
   let rafId = 0;
   let started = 0;
   let lastStep = -1;
+  let activeVariant = 0;
+  let previousVariant = -1;
 
   const canAnimate = (): boolean =>
     !reduced.matches &&
@@ -105,8 +107,20 @@ function initHeroWordmark(): void {
 
     for (let i = 0; i < strips.length; i++) {
       const dx = rowOffsets[i] * unit;
-      strips[i].style.transform = `translateX(${dx}px)`;
-      strips[i].style.opacity = dropped.has(i) ? '0' : '1';
+      const direction = i % 2 === 0 ? -1 : 1;
+      const progress = Math.min(1, step / (TOTAL_STEPS - 1));
+      if (activeVariant === 0) {
+        strips[i].style.transform = `translateX(${dx}px)`;
+        strips[i].style.opacity = dropped.has(i) ? '0' : '1';
+      } else if (activeVariant === 1) {
+        const dy = direction * (TOTAL_STEPS - step) * 1.15;
+        strips[i].style.transform = `translate(${dx}px, ${dy}px) skewX(${direction * (1 - progress) * 6}deg)`;
+        strips[i].style.opacity = dropped.has(i) ? '0' : '1';
+      } else {
+        const dy = direction * (TOTAL_STEPS - step) * 1.8;
+        strips[i].style.transform = `translateY(${dy}px) scaleX(${0.86 + progress * 0.14})`;
+        strips[i].style.opacity = dropped.has(i) ? '0' : String(Math.min(1, progress * 1.6));
+      }
     }
 
     if (scanline) {
@@ -145,6 +159,10 @@ function initHeroWordmark(): void {
       return;
     }
     resetToResting();
+    activeVariant = Math.floor(Math.random() * 3);
+    if (activeVariant === previousVariant) activeVariant = (activeVariant + 1 + Math.floor(Math.random() * 2)) % 3;
+    previousVariant = activeVariant;
+    button!.dataset.variant = String(activeVariant);
     buildStrips();
     button!.setAttribute('data-replaying', 'true');
     stripsWrap.hidden = false;
@@ -154,7 +172,12 @@ function initHeroWordmark(): void {
     rafId = requestAnimationFrame(tick);
   }
 
-  button.addEventListener('click', startReplay);
+  button.addEventListener('pointerenter', event => {
+    if (event.pointerType !== 'touch') startReplay();
+  });
+  button.addEventListener('click', event => {
+    if (event.detail === 0) startReplay();
+  });
 
   const bodyObserver = new MutationObserver(() => {
     if (document.body.classList.contains('title-paused')) {

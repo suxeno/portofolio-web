@@ -24,7 +24,7 @@ Preserve the bounded terminal, command history and completion, manual project sl
 
 ## Brand Commitments
 
-Retain the approved monochrome terminal/computer-science identity, the ARVIN Silkscreen Bold title font and the existing loader identity. Section visuals should be distinct, representative monochrome one-bit dither art with restrained motion and hover/focus response.
+Retain the approved monochrome terminal/computer-science identity, use Pixelta for the ARVIN display and boot glyph, and preserve the existing loader's behavior. Section visuals should be distinct, representative monochrome one-bit dither art with restrained motion and hover/focus response.
 
 ## Evidence on Hand
 

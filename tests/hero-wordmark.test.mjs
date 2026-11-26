@@ -60,7 +60,7 @@ test('wordmark heading stays readable without JS and exposes separate wordmark a
   }
 });
 
-test('wordmark click replays stepped horizontal pixel strips and settles without layout shift', async () => {
+test('wordmark hover replays an animation variation and settles without layout shift', async () => {
   const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
   try {
     await gotoHome(page, { pauseClock: true });
@@ -71,8 +71,9 @@ test('wordmark click replays stepped horizontal pixel strips and settles without
       return { fontFamily: s.fontFamily, fontSize: s.fontSize, color: s.color };
     });
 
-    await wordmark.click();
+    await wordmark.hover();
     assert.equal(await wordmark.getAttribute('data-replaying'), 'true');
+    assert.ok(['0', '1', '2'].includes(await wordmark.getAttribute('data-variant')));
 
     const snapshots = new Set();
     for (let i = 0; i < 12; i++) {
@@ -96,6 +97,24 @@ test('wordmark click replays stepped horizontal pixel strips and settles without
     assert.ok(Math.abs(afterBox.width - beforeBox.width) < 0.5 && Math.abs(afterBox.height - beforeBox.height) < 0.5, JSON.stringify({ beforeBox, afterBox }));
     assert.equal(await page.evaluate(() => document.body.classList.contains('title-paused')), false);
     assert.equal(await page.getByRole('button', { name: 'Pause animations' }).getAttribute('aria-pressed'), 'false');
+  } finally {
+    await page.close();
+  }
+});
+
+test('wordmark chooses among three hover variations without repeating consecutively', async () => {
+  const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+  try {
+    await gotoHome(page);
+    const wordmark = page.getByRole('button', { name: 'Arvin' });
+    const variants = new Set();
+    for (let i = 0; i < 6; i++) {
+      await page.mouse.move(4, 4);
+      await wordmark.hover();
+      variants.add(await wordmark.getAttribute('data-variant'));
+      await page.waitForTimeout(820);
+    }
+    assert.ok(variants.size >= 2, `expected randomized variants, got ${[...variants]}`);
   } finally {
     await page.close();
   }
@@ -133,20 +152,19 @@ test('wordmark honors global pause and reduced motion including mid-animation ca
     const pause = page.getByRole('button', { name: 'Pause animations' });
 
     // Cancel mid-animation via global pause
-    await wordmark.click();
+    await wordmark.hover();
     assert.equal(await wordmark.getAttribute('data-replaying'), 'true');
     await page.clock.runFor(96);
     await pause.click();
     assert.equal(await page.evaluate(() => document.body.classList.contains('title-paused')), true);
     assert.equal(await wordmark.getAttribute('data-replaying'), null);
 
-    // Does not replay while paused
-    await wordmark.click();
+    await wordmark.hover();
     assert.equal(await wordmark.getAttribute('data-replaying'), null);
 
     // Resume allows replay
     await page.getByRole('button', { name: 'Resume animations' }).click();
-    await wordmark.click();
+    await wordmark.hover();
     assert.equal(await wordmark.getAttribute('data-replaying'), 'true');
     await page.clock.runFor(96);
 
@@ -154,15 +172,14 @@ test('wordmark honors global pause and reduced motion including mid-animation ca
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.waitForFunction(() => document.querySelector('.hero-wordmark')?.getAttribute('data-replaying') === null);
 
-    // Does not replay under reduced motion
-    await wordmark.click();
+    await wordmark.hover();
     assert.equal(await wordmark.getAttribute('data-replaying'), null);
   } finally {
     await page.close();
   }
 });
 
-test('wordmark replay and pause control fit cleanly at 320 and 390 mobile viewports', async () => {
+test('wordmark remains responsive on touch widths without a hover interaction', async () => {
   for (const width of [320, 390]) {
     const page = await browser.newPage({ viewport: { width, height: 844 }, hasTouch: true });
     try {
@@ -175,11 +192,8 @@ test('wordmark replay and pause control fit cleanly at 320 and 390 mobile viewpo
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `no overflow before replay at ${width}`);
 
       await wordmark.tap();
-      assert.equal(await wordmark.getAttribute('data-replaying'), 'true');
-      await page.clock.runFor(144);
-      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `no overflow during replay at ${width}`);
-      await page.clock.runFor(700);
       assert.equal(await wordmark.getAttribute('data-replaying'), null);
+      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, `no overflow after touch at ${width}`);
     } finally {
       await page.close();
     }
